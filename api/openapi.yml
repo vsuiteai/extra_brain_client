@@ -1,0 +1,346 @@
+openapi: 3.1.0
+info:
+  title: vSuite Brain Backend API
+  version: 1.0.0
+  description: API documentation for authentication and user management.
+
+servers:
+  - url: http://localhost:5000
+
+paths:
+  /api/auth/login:
+    post:
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful login
+        '401':
+          description: Invalid credentials
+
+  /api/auth/signup:
+    post:
+      summary: User registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                confirmPassword:
+                  type: string
+                companyName:
+                  type: string
+                fullName:
+                  type: string
+      responses:
+        '200':
+          description: User created
+        '400':
+          description: Bad request
+
+  /api/auth/refresh-token:
+    post:
+      summary: Refresh JWT tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Tokens refreshed
+        '401':
+          description: Invalid refresh token
+
+  /api/auth/logout:
+    post:
+      summary: Logout user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Logged out
+        '401':
+          description: Invalid refresh token
+
+  /api/auth/google:
+    post:
+      summary: Google OAuth login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken:
+                  type: string
+      responses:
+        '200':
+          description: Google login success
+        '400':
+          description: Invalid token
+
+  /api/auth/microsoft:
+    post:
+      summary: Microsoft OAuth login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                idToken:
+                  type: string
+      responses:
+        '200':
+          description: Microsoft login success
+        '400':
+          description: Invalid token
+
+  /api/auth/forgot-password:
+    post:
+      summary: Request password reset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+      responses:
+        '200':
+          description: Password reset email sent
+        '400':
+          description: Email not found
+
+  /api/auth/reset-password:
+    post:
+      summary: Reset password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                newPassword:
+                  type: string
+                confirmNewPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password reset successful
+        '400':
+          description: Invalid or expired token
+
+  /api/user/{userId}:
+    get:
+      summary: Get user profile
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+        '404':
+          description: User not found
+
+  /api/user/{userId}/profile-picture:
+    post:
+      summary: Update user profile picture
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Profile picture updated
+        '400':
+          description: No file uploaded
+
+  /api/user/{userId}/personal-info:
+    put:
+      summary: Update personal info
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                jobTitle:
+                  type: string
+                department:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated
+        '404':
+          description: User not found
+
+  /api/user/{userId}/contact-info:
+    put:
+      summary: Update contact info
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                secondaryEmail:
+                  type: string
+                phoneNumber:
+                  type: string
+      responses:
+        '200':
+          description: Contact info updated
+        '404':
+          description: User not found
+
+  /api/user/{userId}/email-notif-preferences:
+    put:
+      summary: Update email notification preferences
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                emailNotifications:
+                  type: boolean
+      responses:
+        '200':
+          description: Preferences updated
+        '404':
+          description: User not found
+
+  /api/user/{userId}/more-activity:
+    put:
+      summary: Update more activity preference
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                moreActivity:
+                  type: boolean
+      responses:
+        '200':
+          description: Preference updated
+        '404':
+          description: User not found
+
+  /api/user/{userId}/change-password:
+    put:
+      summary: Change user password
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+        '404':
+          description: User not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

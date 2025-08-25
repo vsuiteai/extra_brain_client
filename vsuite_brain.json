@@ -1,0 +1,387 @@
+{
+  "CEO_Brain": {
+    "Layers": [
+      {
+        "Layer": "Financial Analysis",
+        "DataInputs": {
+          "Required": {
+            "BalanceSheet": "ERP/Accounting API (NetSuite, SAP, QuickBooks)",
+            "IncomeStatement": "ERP/Accounting API",
+            "CashFlowStatement": "ERP/Accounting API",
+            "BankingData": "Banking API (Plaid, Treasury systems)"
+          },
+          "Optional": {
+            "BudgetForecasts": "FP&A API (Anaplan, Adaptive Insights)",
+            "PeerBenchmarks": "Market Data API (Bloomberg, S&P Capital IQ)",
+            "VarianceData": "Custom Data Upload (CSV/XLS)"
+          }
+        },
+        "Frameworks_Models": [
+          "Forensic Cash Flow Analysis",
+          "13-Week Rolling Cash Flow Forecasting",
+          "Variance Analysis",
+          "Scenario & Sensitivity Analysis",
+          "Monte Carlo Simulation",
+          "Debt Service Coverage Ratio (DSCR) & Covenant Compliance Modeling",
+          "Balanced Scorecard (Financial Perspective)",
+          "Peer Benchmarking (Harvard/Stanford Case Data)"
+        ],
+        "Deliverables": [
+          "CFO-to-Board Narrative Memos",
+          "13-Week Cash Flow Dashboards",
+          "Variance Waterfall Charts",
+          "DSCR & Covenant Breach Forecasts",
+          "Peer Benchmarking Reports"
+        ],
+        "Prompts": {
+          "Primary": "Analyze the company’s financial health using forensic modeling, cash flow forecasting, and peer benchmarking. Provide a board-ready narrative with KPIs and dashboards.",
+          "SubPrompts": [
+            "Run a 13-week rolling cash flow with base, best, and downside cases.",
+            "Perform variance analysis for margin compression drivers and quantify their impact.",
+            "Simulate covenant breaches and provide lender negotiation strategies.",
+            "Prepare a board-ready financial health memo with action recommendations."
+          ]
+        }
+      },
+      {
+        "Layer": "Capital Stack & Funding",
+        "DataInputs": {
+          "Required": {
+            "DebtSchedule": "ERP/Accounting API or Treasury System",
+            "EquityStructure": "Cap Table API (Carta, Pulley)",
+            "CostOfCapital": "Financial Modeling API or Manual Input"
+          },
+          "Optional": {
+            "MarketRates": "Market Data API (Bloomberg, FRED)",
+            "CovenantData": "Loan Agreement API/Upload",
+            "IPOReadinessDocs": "Document Management API"
+          }
+        },
+        "Frameworks_Models": [
+          "Weighted Average Cost of Capital (WACC)",
+          "Internal Rate of Return (IRR)",
+          "Accretion/Dilution Analysis",
+          "Comparable Company & Precedent Transaction Analysis",
+          "Funding Options Matrix",
+          "Creditworthiness Scoring & Yield Curve Integration",
+          "Recovery Payout Waterfall",
+          "IPO/S-1 Readiness Framework"
+        ],
+        "Deliverables": [
+          "Capital Stack Visualizations (Pre/Post Funding)",
+          "Funding Options Decision Matrix",
+          "Board-Ready Funding Recommendation Memos",
+          "Lender Pro Forma Models",
+          "IPO Readiness Reports"
+        ],
+        "Prompts": {
+          "Primary": "Optimize the capital stack using live yield curve data, WACC modeling, and funding scenarios. Provide board-ready options with risk and return analysis.",
+          "SubPrompts": [
+            "Compare mezzanine financing, equity infusion, and AR factoring with IRR and dilution impacts.",
+            "Simulate IPO readiness with governance and disclosure gap analysis.",
+            "Model a recovery payout waterfall in downside funding scenarios."
+          ]
+        }
+      },
+      {
+        "Layer": "M&A & Acquisition Strategy",
+        "DataInputs": {
+          "Required": {
+            "TargetFinancials": "Data Room API or Uploaded Docs",
+            "SynergyAssumptions": "Manual Input or Consultant Upload",
+            "DealStructure": "M&A Platform API (Intralinks, Datasite)"
+          },
+          "Optional": {
+            "ComparableTransactions": "Market Data API (PitchBook, Capital IQ)",
+            "CulturalAssessment": "HRIS or Survey Platform",
+            "IntegrationPlans": "PMO Software (Asana, Monday.com)"
+          }
+        },
+        "Frameworks_Models": [
+          "Discounted Cash Flow (DCF) Valuation",
+          "Synergy Valuation Modeling",
+          "Accretion/Dilution EPS Analysis",
+          "Real Options Analysis",
+          "Comparable & Precedent Transactions",
+          "Earn-Out Structuring & Hurdle Rate Modeling",
+          "Pre-LOI & Diligence Frameworks",
+          "100-Day Post-Merger Integration Playbook",
+          "Vision Realignment Framework™"
+        ],
+        "Deliverables": [
+          "Pre-LOI Target Briefs",
+          "DCF & Synergy Valuation Models",
+          "Accretion/Dilution Analysis Reports",
+          "Deal Structure Recommendations (Earn-Outs, Equity Mix)",
+          "100-Day Post-Merger Integration Roadmaps"
+        ],
+        "Prompts": {
+          "Primary": "Develop a full-cycle M&A strategy from target identification through post-close integration. Provide board-ready valuations, deal structures, and integration plans.",
+          "SubPrompts": [
+            "Create a pre-LOI brief with strategic rationale, preliminary valuation, and cultural assessment.",
+            "Run DCF and synergy valuation models for the acquisition target.",
+            "Design an earn-out structure with hurdle-based payouts.",
+            "Draft a 100-day post-merger integration playbook for operational and cultural alignment."
+          ]
+        }
+      },
+      {
+        "Layer": "Strategic Simulation",
+        "DataInputs": {
+          "Required": {
+            "MarketSizeData": "Market Research API (IBISWorld, Statista)",
+            "CompetitiveLandscape": "Competitor Intelligence API (Crayon, SimilarWeb)"
+          },
+          "Optional": {
+            "EconomicIndicators": "Macro Data API (FRED, IMF)",
+            "ScenarioAssumptions": "Manual Upload or Input"
+          }
+        },
+        "Frameworks_Models": [
+          "Blue Ocean Strategy",
+          "Porter’s Five Forces",
+          "PESTEL Analysis",
+          "SWOT Analysis",
+          "Real Options Analysis",
+          "Scenario Planning (Harvard Case Method)",
+          "Advantage Tomorrow Principles"
+        ],
+        "Deliverables": [
+          "Harvard-Style Case Reports",
+          "Market Heat Maps",
+          "ROI & Sensitivity Analysis Tables",
+          "Strategic Roadmaps (3-5 Years)",
+          "Board-Ready Scenario Playbooks"
+        ],
+        "Prompts": {
+          "Primary": "Run strategic simulations for acquisitions, divestitures, market expansions, and paradigm shifts using multi-lens frameworks. Provide Harvard-style case narratives with ROI tables.",
+          "SubPrompts": [
+            "Simulate divesting a non-core business unit with financial and strategic impacts.",
+            "Create a Blue Ocean strategy canvas for entering uncontested markets.",
+            "Perform PESTEL analysis for geopolitical/regulatory disruptions."
+          ]
+        }
+      },
+      {
+        "Layer": "Leadership & People",
+        "DataInputs": {
+          "Required": {
+            "EmployeeHeadcount": "HRIS API (Workday, BambooHR, ADP)",
+            "EngagementScores": "Survey API (CultureAmp, Gallup Q12)",
+            "AttritionData": "HR Analytics API (Visier, ChartHop)"
+          },
+          "Optional": {
+            "CompensationData": "HRIS or Payroll APIs",
+            "SuccessionPlans": "Manual Upload",
+            "Leadership360Feedback": "Survey Platform"
+          }
+        },
+        "Frameworks_Models": [
+          "The Invisible Handshake™",
+          "Vision Realignment Framework™",
+          "Gallup Q12 Engagement Framework",
+          "Balanced Scorecard (People Perspective)",
+          "Succession Planning Models",
+          "Diversity, Equity, Inclusion (DEI) Benchmarks",
+          "Predictive Attrition Modeling"
+        ],
+        "Deliverables": [
+          "Culture Heatmaps",
+          "Leadership Trust Index Reports",
+          "Succession & Flight Risk Dashboards",
+          "DEI Benchmarks and Action Plans",
+          "Employee Engagement Playbooks"
+        ],
+        "Prompts": {
+          "Primary": "Assess organizational health using The Invisible Handshake and Gallup Q12. Deliver a culture heatmap, succession plans, and trust-building roadmaps.",
+          "SubPrompts": [
+            "Deploy Vision Realignment for a 90-day cultural reset.",
+            "Run a leadership trust audit with scoring for each executive.",
+            "Prepare a succession readiness plan for top 10 critical roles."
+          ]
+        }
+      },
+      {
+        "Layer": "Brand & Identity",
+        "DataInputs": {
+          "Required": {
+            "NPS": "Survey API (Medallia, Delighted)",
+            "CustomerSentiment": "Social Listening API (Sprout Social, Brandwatch)"
+          },
+          "Optional": {
+            "CompetitorBrandData": "Market Intelligence API (Nielsen, Crayon)",
+            "CustomerJourneyMaps": "CX Platforms"
+          }
+        },
+        "Frameworks_Models": [
+          "Rebranding Business Framework",
+          "Brand Drift Index",
+          "Net Promoter Score (NPS)",
+          "Customer Journey Mapping",
+          "Competitor Brand Equity Benchmarking",
+          "Brand ROI Modeling"
+        ],
+        "Deliverables": [
+          "Brand Drift Index Reports",
+          "90-Day Rebranding Roadmaps",
+          "Customer Journey Maps",
+          "Competitor Brand Positioning Reports",
+          "Investor/Board Brand Rationale Briefs"
+        ],
+        "Prompts": {
+          "Primary": "Evaluate brand alignment using the Rebranding Business Framework and Brand Drift Index. Provide a 90-day rebrand roadmap with ROI projections.",
+          "SubPrompts": [
+            "Run an internal vs external brand perception analysis.",
+            "Map the customer journey and identify friction points.",
+            "Prepare a board-ready rebrand rationale with ROI modeling."
+          ]
+        }
+      },
+      {
+        "Layer": "Crisis Management",
+        "DataInputs": {
+          "Required": {
+            "CrisisType": "Manual Entry or Incident Management System",
+            "FinancialExposure": "ERP/Finance API",
+            "RegulatoryNotifications": "Compliance API"
+          },
+          "Optional": {
+            "LegalCounselNotes": "Document Management System",
+            "PRMonitoring": "Media Intelligence API"
+          }
+        },
+        "Frameworks_Models": [
+          "Root Cause Analysis (RCA)",
+          "Regulatory Triage Framework",
+          "Liquidity Contingency Modeling",
+          "Reputation Risk Scoring",
+          "Board Alignment Protocols",
+          "Special Committee Formation Criteria"
+        ],
+        "Deliverables": [
+          "Crisis Heatmaps",
+          "30-60-90 Day Containment & Recovery Playbooks",
+          "Regulatory & Litigation Response Kits",
+          "CEO & Board Crisis Communication Scripts",
+          "Reputation Risk Reports"
+        ],
+        "Prompts": {
+          "Primary": "Assess and manage crises across financial, legal, operational, and reputational domains. Deliver containment plans and stakeholder communication kits.",
+          "SubPrompts": [
+            "Simulate a liquidity crisis with bridge financing options.",
+            "Prepare a litigation impact and settlement strategy memo.",
+            "Create a rapid-response PR plan for reputational crises."
+          ]
+        }
+      },
+      {
+        "Layer": "Operations & Efficiency",
+        "DataInputs": {
+          "Required": {
+            "ProductionData": "ERP/MRP System",
+            "VendorPerformance": "Supply Chain API",
+            "InventoryLevels": "ERP/WMS API"
+          },
+          "Optional": {
+            "CommodityPricing": "Market Data API (LME, Bloomberg)",
+            "AutomationPlans": "PMO Platforms"
+          }
+        },
+        "Frameworks_Models": [
+          "Lean Six Sigma (DMAIC)",
+          "Balanced Scorecard (Internal Process Perspective)",
+          "ERP & Automation ROI Modeling",
+          "Commodity Hedging Strategies",
+          "Vendor Scoring Frameworks",
+          "Onshore vs. Offshore Cost-Benefit Analysis"
+        ],
+        "Deliverables": [
+          "Operational Efficiency Scorecards",
+          "Vendor Performance Dashboards",
+          "Hedging Playbooks",
+          "Automation & ERP Implementation Roadmaps",
+          "Cost-Savings Tiered Roadmaps"
+        ],
+        "Prompts": {
+          "Primary": "Analyze operations using Lean Six Sigma and ERP ROI modeling. Provide vendor dashboards, hedging playbooks, and a 6-month efficiency roadmap.",
+          "SubPrompts": [
+            "Run a DMAIC project for the highest-cost operational process.",
+            "Develop a commodity cost hedging strategy for copper and PVC.",
+            "Simulate offshore-to-onshore production transitions."
+          ]
+        }
+      },
+      {
+        "Layer": "Governance & Board",
+        "DataInputs": {
+          "Required": {
+            "BoardRoster": "Governance Platform API (Diligent, BoardEffect)",
+            "VotingHistory": "Board Portal API",
+            "ComplianceDocs": "Document Management API"
+          },
+          "Optional": {
+            "ESGReports": "Sustainability Reporting Platforms",
+            "AuditFindings": "SOX/SEC Compliance Platforms"
+          }
+        },
+        "Frameworks_Models": [
+          "CEO–Board Trust Index™",
+          "SOX/SEC Audit Readiness Framework",
+          "Board Skills Matrix",
+          "Voting Behavior Simulation",
+          "ESG Disclosure Standards",
+          "Governance Risk Heatmap"
+        ],
+        "Deliverables": [
+          "CEO–Board Trust Index Reports",
+          "Board Voting Simulation Dashboards",
+          "Audit & Regulatory Readiness Checklists",
+          "ESG Disclosure Packages",
+          "Board Composition & Skills Gap Analyses"
+        ],
+        "Prompts": {
+          "Primary": "Assess governance health with the CEO–Board Trust Index and voting simulations. Deliver audit kits, ESG disclosures, and skills gap analyses.",
+          "SubPrompts": [
+            "Simulate a board vote on a high-stakes decision.",
+            "Prepare a SOX/SEC audit readiness checklist.",
+            "Create a governance risk heatmap with escalation plans."
+          ]
+        }
+      },
+      {
+        "Layer": "AI Alerts & Action Launcher",
+        "DataInputs": {
+          "Required": {
+            "SystemMonitoring": "ERP, CRM, HRIS APIs",
+            "AlertThresholds": "Manual Setup or Consultant Input"
+          },
+          "Optional": {
+            "PredictiveModels": "AI/ML Platform Integrations"
+          }
+        },
+        "Frameworks_Models": [
+          "Predictive Analytics Models",
+          "Risk Severity Scoring Matrix",
+          "Automated Escalation Protocols",
+          "Vote Simulation Engine",
+          "Marcus Benjamin’s Leadership Communication Frameworks"
+        ],
+        "Deliverables": [
+          "Real-Time Alert Dashboards",
+          "1-Page CEO Action Briefs",
+          "Pre-Drafted Board/Staff Communication Scripts",
+          "Escalation Workflows with Assigned Owners",
+          "72-Hour Stabilization Plans for Crises"
+        ],
+        "Prompts": {
+          "Primary": "Monitor real-time risks across all domains. Auto-generate alerts, action briefs, and escalation workflows with pre-approved communications.",
+          "SubPrompts": [
+            "Trigger emergency finance workflows when runway drops below threshold.",
+            "Send cultural health alerts based on engagement score drops.",
+            "Prepare rapid-response communication for reputational crises."
+          ]
+        }
+      }
+    ]
+  }
+}

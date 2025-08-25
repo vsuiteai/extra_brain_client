@@ -1,0 +1,27 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "kpis",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "layer", "order": "ASCENDING" },
+        { "fieldPath": "updated", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "prompts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "personaRef", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "subPrompts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "promptRef", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
