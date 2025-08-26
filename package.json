@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "nodemon api/server.js",
+    "start": "node api/server.js",
     "seed-demo": "node scripts/seedDemo.js"
   },
   "dependencies": {
