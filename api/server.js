@@ -90,5 +90,5 @@ app.get('/health', async () => ({ status: 'ok' }));
 await app.register(authRoutes);
 await app.register(userRoutes);
 
-const port = process.env.PORT || 5001;
+const port = process.env.PORT || 8080;
 app.listen({ port, host: '0.0.0.0' });
