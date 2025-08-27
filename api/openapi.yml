@@ -5,7 +5,8 @@ info:
   description: API documentation for authentication and user management.
 
 servers:
-  - url: http://localhost:5000
+  - url: "http://localhost:5001"
+  - url: "https://vsuite-service-prod-1046215561949.us-central1.run.app"
 
 paths:
   /api/auth/login:
@@ -281,7 +282,7 @@ paths:
               type: object
               properties:
                 emailNotifications:
-                  type: boolean
+                  type: object
       responses:
         '200':
           description: Preferences updated
@@ -305,7 +306,7 @@ paths:
               type: object
               properties:
                 moreActivity:
-                  type: boolean
+                  type: object
       responses:
         '200':
           description: Preference updated

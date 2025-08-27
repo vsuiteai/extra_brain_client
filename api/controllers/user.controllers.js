@@ -1,6 +1,5 @@
 import bcrypt from 'bcryptjs';
 import { Firestore } from '@google-cloud/firestore';
-import multipart from "@fastify/multipart";
 import { Storage } from "@google-cloud/storage";
 import path from 'path';
 
@@ -8,9 +7,7 @@ const firestore = new Firestore();
 const storage = new Storage();
 const bucket = storage.bucket('vsuite-objects');
 
-const updateProfilePicture = (app) => async (req, reply) => {
-  app.register(multipart);
-
+const updateProfilePicture = async (req, reply) => {
   const data = await req.file();
   const { userId } = req.params;
 
@@ -38,9 +35,6 @@ const updateProfilePicture = (app) => async (req, reply) => {
       .on("error", reject);
   })
 
-  // Make the file public
-  await file.makePublic;
-
   // Get the public URL
   const publicUrl = `https://storage.googleapis.com/${bucket.name}/${gcsFilename}`;
 
@@ -56,7 +50,7 @@ const updateProfilePicture = (app) => async (req, reply) => {
 const getUser = async (req, reply) => {
   const { userId } = req.params;
 
-  const userDoc = await firestore.collection('users').dpc(userId).get();
+  const userDoc = await firestore.collection('users').doc(userId).get();
   if (!userDoc.exists) {
     return reply.code(404).send({ error: 'User not found' });
   }
@@ -96,7 +90,7 @@ const updateContactInfo = async (req, reply) => {
   await firestore.collection('users').doc(userId).update({
     secondaryEmail,
     phoneNumber,
-    updatedAt: new Date().toISOString,
+    updatedAt: new Date().toISOString(),
   });
 
   return reply.code(200).send({ message: 'Contact info updated successfully' });

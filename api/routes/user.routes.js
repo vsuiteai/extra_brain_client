@@ -10,7 +10,7 @@ import {
 } from '../controllers/user.controllers.js';
 
 export default fp(async (fastify) => {
-  fastify.post('/api/user/:userId/profile-picture', { preHandler: [fastify.authenticate] }, updateProfilePicture(fastify));
+  fastify.post('/api/user/:userId/profile-picture', { preHandler: [fastify.authenticate] }, updateProfilePicture);
   fastify.get('/api/user/:userId', { preHandler: [fastify.authenticate] }, getUser);
   fastify.put('/api/user/:userId/personal-info', { preHandler: [fastify.authenticate] }, updatePersonalInfo);
   fastify.put('/api/user/:userId/contact-info', { preHandler: [fastify.authenticate] }, updateContactInfo);
