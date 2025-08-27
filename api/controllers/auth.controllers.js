@@ -318,12 +318,74 @@ const forgotPassword = async (req, reply) => {
   // send email with reset link
   const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${token}`;
 
+  const emailTemplate = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Password Reset</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+    <tr>
+      <td align="center" style="padding:20px 0;">
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,0.1);">
+          <!-- Header -->
+          <tr>
+            <td align="center" bgcolor="#4F46E5" style="padding:20px 30px;">
+              <h1 style="margin:0;font-size:24px;color:#ffffff;">Reset Your Password</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding:30px;">
+              <p style="margin:0 0 15px;font-size:16px;color:#333;">Hello,</p>
+              <p style="margin:0 0 15px;font-size:16px;color:#333;">
+                We received a request to reset your password. Click the button below to set a new password:
+              </p>
+              <p style="text-align:center;margin:30px 0;">
+                <a href="{{resetLink}}" 
+                   style="background-color:#4F46E5;color:#ffffff;text-decoration:none;
+                          padding:12px 24px;border-radius:6px;font-size:16px;
+                          display:inline-block;">
+                  Reset Password
+                </a>
+              </p>
+              <p style="margin:0 0 15px;font-size:14px;color:#666;">
+                If you didn’t request this, you can safely ignore this email.
+              </p>
+              <p style="margin:0;font-size:14px;color:#666;">
+                This link will expire in 1 hour for security reasons.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td align="center" bgcolor="#f9f9f9" style="padding:20px;font-size:12px;color:#999;">
+              <p style="margin:0;">&copy; {{year}} VSuite. All rights reserved.</p>
+              <p style="margin:5px 0 0;">If you need help, contact us at 
+                <a href="mailto:admin@vsuite.ai style="color:#4F46E5;text-decoration:none;">admin@vsuite.ai</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
   const msg = {
     to: user.email,
     from: process.env.SENDGRID_FROM_EMAIL,
     subject: 'Password Reset Request',
     text: 'Click here to reset your password: ' + resetLink,
-    html: `<p>Click >a href="${resetLink}">here</p> to reset your password.`,
+    html: `
+    ${emailTemplate
+      .replace("{{resetLink}}", resetLink)
+      .replace("{{year}}", new Date().getFullYear())}
+  `,
   }
 
   await sgMail.send(msg);
