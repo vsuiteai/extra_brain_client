@@ -38,9 +38,6 @@ const updateProfilePicture = (app) => async (req, reply) => {
       .on("error", reject);
   })
 
-  // Make the file public
-  await file.makePublic;
-
   // Get the public URL
   const publicUrl = `https://storage.googleapis.com/${bucket.name}/${gcsFilename}`;
 
