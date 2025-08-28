@@ -41,7 +41,7 @@ const login = async (req, reply) => {
 
   // Persist refresh token (could be array for multi-device support)
   await firestore.collection('users').doc(userId).update({
-    refreshTokens: [...(user.refreshTokens || []), refreshToken],
+    refreshTokens: [refreshToken],
   });
 
   return { id: userId, ...user, accessToken, refreshToken };
@@ -120,7 +120,6 @@ const refreshTokens = (app) => async (req, reply) => {
 
     await firestore.collection('users').doc(userDoc.docs[0].id).update({
       refreshTokens: [
-        ...user.refreshTokens.filter(t => t !== refreshToken),
         newRefreshToken,
       ]
     })
@@ -181,7 +180,6 @@ const googleAuth = async (req, reply) => {
 
   const redirectUri = `${process.env.BASE_URL}${GOOGLEREDIRECTURI_PATH}`;
 
-  // const tokenUrl = 'https://oauth2.googleapis.com/token';
   const oauth2Client = new OAuth2Client(
     googleClientId,
     googleClientSecret,
@@ -189,29 +187,6 @@ const googleAuth = async (req, reply) => {
   );
   const { tokens } = await oauth2Client.getToken(code);
   oauth2Client.setCredentials(tokens);
-  // try {
-  //   tokenRes = await axios.post(
-  //     tokenUrl,
-  //     new URLSearchParams({
-  //       code: String(code),
-  //       client_id: String(googleClientId),
-  //       client_secret: String(googleClientSecret),
-  //       redirect_uri: redirectUri,
-  //       grant_type: 'authorization_code',
-  //     }).toString(),
-  //     {
-  //       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  //       timeout: 10000,
-  //     }
-  //   );
-
-  //   if (tokenRes.status !== 200 || !tokenRes.data) {
-  //     return reply.code(500).send({ error: 'Failed to exchange code for token' });
-  //   }
-  // } catch (err) {
-  //   console.log(err.message);
-  //   return reply.code(500).send({ error: 'Failed to exchange code for token ' + err.message });
-  // }
 
   const accessToken = tokens.access_token;
   // const idToken = tokenRes.data.id_token;
@@ -284,7 +259,7 @@ const googleAuth = async (req, reply) => {
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
     await firestore.collection('users').doc(userId).update({
-      refreshTokens: [...(user.refreshTokens || []), refreshToken],
+      refreshTokens: [refreshToken],
     });
 
     const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
