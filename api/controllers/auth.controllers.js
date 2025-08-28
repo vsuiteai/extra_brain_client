@@ -1,10 +1,9 @@
 import bcrypt from 'bcryptjs';
 import jwksClient from 'jwks-rsa';
 import sgMail from '@sendgrid/mail';
-import { OAuth2Client } from 'google-auth-library';
 import { Firestore } from '@google-cloud/firestore';
+import axios from 'axios';
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const tenantId = process.env.MICROSOFT_TENANT_ID || 'common';
 const microsoftClientId = process.env.MICROSOFT_CLIENT_ID;
 
@@ -160,18 +159,71 @@ const logout = (app) => async (req, reply) => {
   }
 }
 
-const googleAuth = async (req, reply) => {
-  const { idToken } = req.body;
-  if (!idToken) return reply.code(400).send({ error: 'ID token is required' });
+const googleLogin = async (req, res) => {
+  const state = req.query.state || '/';
+  const redirectUrl = `${process.env.BASE_URL}/api/auth/google`;
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${state}`;
 
-  // Verify the ID token with Google
-  const ticket = await client.verifyIdToken({
-    idToken,
-    audience: process.env.GOOGLE_CLIENT_ID,
+  return res.redirect(302, googleAuthUrl);
+}
+
+const googleAuth = async (req, reply) => {
+  const { code, state } = req.query;
+  if (!code) return reply.code(400).send({ error: 'code is required' });
+
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  const GOOGLEREDIRECTURI_PATH = '/api/auth/google';
+
+  if (!googleClientId && !googleClientSecret) return reply.code(400).send({ error: 'Google client id and secret are required' });
+
+  const redirectUri = `${process.env.BASE_URL}${GOOGLEREDIRECTURI_PATH}`;
+
+  const tokenUrl = 'https://oauth2.googleapis.com/token';
+  const tokenRes = await axios.post(
+    tokenUrl,
+    new URLSearchParams({
+      code: String(code),
+      client_id: String(googleClientId),
+      client_secret: String(googleClientSecret),
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+    }).toString(),
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      timeout: 10000,
+    }
+  );
+
+  if (tokenRes.status !== 200 || !tokenRes.data) {
+    return reply.code(500).send({ error: 'Failed to exchange code for token' });
+  }
+
+  const accessToken = tokenRes.data.access_token;
+  // const idToken = tokenRes.data.id_token;
+
+  const userInfoUrl = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json';
+  const userInfoRes = await axios.get(userInfoUrl, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json',
+    },
+    timeout: 10000,
   });
 
-  const payload = ticket.getPayload();
-  const { sub: googleId, email, name, picture } = payload;
+  if (userInfoRes.status !== 200 || !userInfoRes.data) {
+    return reply.code(500).send({ error: 'Failed to fetch google user info' });
+  }
+
+  const googleUser = userInfoRes.data;
+  const email = googleUser.email;
+  const name = googleUser.name || '';
+  const picture = googleUser.picture || '';
+
+  if (!email) {
+    return reply.code(500).send({ error: 'google account has no email' });
+  }
 
   const userDoc = await firestore.collection('users')
     .where('email', '==', email)
@@ -194,21 +246,21 @@ const googleAuth = async (req, reply) => {
       email,
       fullName: name,
       avatar: picture,
-      googleId,
       role: roleDoc.docs[0].data(),
       createdAt: new Date().toISOString(),
       refreshTokens: [refreshToken],
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    return { id: newUserDoc.id, ...newUser, accessToken, refreshToken };
+    const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
+    
+    return res.redirect(302, redirectTo);
+
+    // return { id: newUserDoc.id, ...newUser, accessToken, refreshToken };
   } else {
     // Existing user, log in
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
-    if (user.googleId !== googleId) {
-      return reply.code(400).send({ error: 'Google ID does not match' });
-    }
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
@@ -216,7 +268,11 @@ const googleAuth = async (req, reply) => {
       refreshTokens: [...(user.refreshTokens || []), refreshToken],
     });
 
-    return { id: userId, ...user, accessToken, refreshToken };
+    const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
+    
+    return res.redirect(302, redirectTo);
+
+    // return { id: userId, ...user, accessToken, refreshToken };
   }
 }
 
@@ -449,4 +505,14 @@ const resetPassword = async (req, reply) => {
   }
 }
 
-export { login, signUp, refreshTokens, logout, googleAuth, microsoftAuth, forgotPassword, resetPassword };
+export {
+  login,
+  signUp,
+  refreshTokens,
+  logout,
+  googleAuth,
+  microsoftAuth,
+  forgotPassword,
+  resetPassword,
+  googleLogin
+};
