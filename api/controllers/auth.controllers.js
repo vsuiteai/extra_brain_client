@@ -243,7 +243,7 @@ const googleAuth = async (req, reply) => {
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
+    const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
     
     return reply.redirect(redirectTo, 302);
 
@@ -259,7 +259,7 @@ const googleAuth = async (req, reply) => {
       refreshTokens: refreshToken,
     });
 
-    const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
+    const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
     
     return reply.redirect(redirectTo, 302);
 
