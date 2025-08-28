@@ -159,13 +159,13 @@ const logout = (app) => async (req, reply) => {
   }
 }
 
-const googleLogin = async (req, res) => {
-  const state = req.query.state || '/';
+const googleLogin = async (req, reply) => {
+  const state = req.query.state || '';
   const redirectUrl = `${process.env.BASE_URL}/api/auth/google`;
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${state}`;
 
-  return res.redirect(302, googleAuthUrl);
+  return reply.redirect(302, googleAuthUrl);
 }
 
 const googleAuth = async (req, reply) => {
@@ -254,7 +254,7 @@ const googleAuth = async (req, reply) => {
 
     const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
     
-    return res.redirect(302, redirectTo);
+    return reply.redirect(302, redirectTo);
 
     // return { id: newUserDoc.id, ...newUser, accessToken, refreshToken };
   } else {
@@ -270,7 +270,7 @@ const googleAuth = async (req, reply) => {
 
     const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
     
-    return res.redirect(302, redirectTo);
+    return reply.redirect(302, redirectTo);
 
     // return { id: userId, ...user, accessToken, refreshToken };
   }
