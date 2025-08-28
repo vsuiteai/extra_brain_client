@@ -160,7 +160,7 @@ const logout = (app) => async (req, reply) => {
 }
 
 const googleLogin = async (req, res) => {
-  const state = req.query.state || '/';
+  const state = req.query.state || '';
   const redirectUrl = `${process.env.BASE_URL}/api/auth/google`;
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${state}`;
