@@ -41,7 +41,7 @@ const login = async (req, reply) => {
 
   // Persist refresh token (could be array for multi-device support)
   await firestore.collection('users').doc(userId).update({
-    refreshTokens: [refreshToken],
+    refreshTokens: refreshToken,
   });
 
   return { id: userId, ...user, accessToken, refreshToken };
@@ -89,7 +89,6 @@ const signUp = async (req, reply) => {
       fullName,
       role: roleDoc.docs[0].data(),
       createdAt: new Date().toISOString(),
-      refreshTokens: [],
     }
 
     await firestore.collection('users').add(newUser);
@@ -119,9 +118,7 @@ const refreshTokens = (app) => async (req, reply) => {
     const { accessToken, refreshToken: newRefreshToken } = app.generateTokens({ ...user});
 
     await firestore.collection('users').doc(userDoc.docs[0].id).update({
-      refreshTokens: [
-        newRefreshToken,
-      ]
+      refreshTokens: newRefreshToken,
     })
 
     return { id: userId, ...user, accessToken, refreshToken: newRefreshToken };
@@ -144,12 +141,12 @@ const logout = (app) => async (req, reply) => {
     if (userDoc.empty) return reply.code(401).send({ error: 'Invalid refresh token' });
 
     const user = userDoc.docs[0].data();
-    if (!user.refreshTokens?.includes(refreshToken)) {
+    if (user.refreshTokens === refreshToken) {
       return reply.code(401).send({ error: 'Refresh token already revoked' });
     }
 
     await firestore.collection('users').doc(userDoc.docs[0].id).update({
-      refreshTokens: user.refreshTokens.filter(t => t !== refreshToken)
+      refreshTokens: '',
     })
 
     return { ok: true, message: 'Logged out successfully' };
@@ -242,7 +239,7 @@ const googleAuth = async (req, reply) => {
       avatar: picture,
       role: roleDoc.docs[0].data(),
       createdAt: new Date().toISOString(),
-      refreshTokens: [refreshToken],
+      refreshTokens: refreshToken,
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
@@ -259,7 +256,7 @@ const googleAuth = async (req, reply) => {
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
     await firestore.collection('users').doc(userId).update({
-      refreshTokens: [refreshToken],
+      refreshTokens: refreshToken,
     });
 
     const redirectTo = `${process.env.FRONTEND_URL}/${encodeURIComponent(state)}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
@@ -305,11 +302,10 @@ const microsoftAuth = async (req, reply) => {
         microsoftId,
         role: roleDoc.docs[0].data(),
         createdAt: new Date().toISOString(),
-        refreshTokens: [],
       }
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
-      newUser.refreshTokens.push(refreshToken);
+      newUser.refreshTokens = refreshToken;
 
       const newUserDoc = await firestore.collection('users').add(newUser);
 
@@ -325,7 +321,7 @@ const microsoftAuth = async (req, reply) => {
       const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
       await firestore.collection('users').doc(userId).update({
-        refreshTokens: [...(user.refreshTokens || []), refreshToken],
+        refreshTokens: refreshToken,
       });
 
       return { id: userId, ...user, accessToken, refreshToken };
