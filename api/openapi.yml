@@ -108,7 +108,22 @@ paths:
           description: Google login success
         '400':
           description: Invalid token
+      get:
+        summary: Google OAuth callback
+        responses:
+          '200':
+            description: Google OAuth callback handled
+          '400':
+            description: Invalid callback
 
+    /api/auth/google-login:
+      get:
+        summary: Google OAuth login page
+        responses:
+          '200':
+            description: Google login page
+          '400':
+            description: Invalid request
   /api/auth/microsoft:
     post:
       summary: Microsoft OAuth login
@@ -170,6 +185,8 @@ paths:
   /api/user/{userId}:
     get:
       summary: Get user profile
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -185,6 +202,8 @@ paths:
   /api/user/{userId}/profile-picture:
     post:
       summary: Update user profile picture
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -210,6 +229,8 @@ paths:
   /api/user/{userId}/personal-info:
     put:
       summary: Update personal info
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -242,6 +263,8 @@ paths:
   /api/user/{userId}/contact-info:
     put:
       summary: Update contact info
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -268,6 +291,8 @@ paths:
   /api/user/{userId}/email-notif-preferences:
     put:
       summary: Update email notification preferences
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -292,6 +317,8 @@ paths:
   /api/user/{userId}/more-activity:
     put:
       summary: Update more activity preference
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
@@ -316,6 +343,8 @@ paths:
   /api/user/{userId}/change-password:
     put:
       summary: Change user password
+      security:
+        - bearerAuth: []
       parameters:
         - name: userId
           in: path
