@@ -181,39 +181,51 @@ const googleAuth = async (req, reply) => {
   const redirectUri = `${process.env.BASE_URL}${GOOGLEREDIRECTURI_PATH}`;
 
   const tokenUrl = 'https://oauth2.googleapis.com/token';
-  const tokenRes = await axios.post(
-    tokenUrl,
-    new URLSearchParams({
-      code: String(code),
-      client_id: String(googleClientId),
-      client_secret: String(googleClientSecret),
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-    }).toString(),
-    {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      timeout: 10000,
-    }
-  );
+  let tokenRes;
+  try {
+    tokenRes = await axios.post(
+      tokenUrl,
+      new URLSearchParams({
+        code: String(code),
+        client_id: String(googleClientId),
+        client_secret: String(googleClientSecret),
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      }).toString(),
+      {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: 10000,
+      }
+    );
 
-  if (tokenRes.status !== 200 || !tokenRes.data) {
-    return reply.code(500).send({ error: 'Failed to exchange code for token' });
+    if (tokenRes.status !== 200 || !tokenRes.data) {
+      return reply.code(500).send({ error: 'Failed to exchange code for token' });
+    }
+  } catch (err) {
+    console.log(err.message);
+    return reply.code(500).send({ error: 'Failed to exchange code for token ' + err.message });
   }
 
   const accessToken = tokenRes.data.access_token;
   // const idToken = tokenRes.data.id_token;
 
   const userInfoUrl = 'https://www.googleapis.com/oauth2/v1/userinfo?alt=json';
-  const userInfoRes = await axios.get(userInfoUrl, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      Accept: 'application/json',
-    },
-    timeout: 10000,
-  });
+  let userInfoRes;
+  try {
+    userInfoRes = await axios.get(userInfoUrl, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json',
+      },
+      timeout: 10000,
+    });
 
-  if (userInfoRes.status !== 200 || !userInfoRes.data) {
-    return reply.code(500).send({ error: 'Failed to fetch google user info' });
+    if (userInfoRes.status !== 200 || !userInfoRes.data) {
+      return reply.code(500).send({ error: 'Failed to fetch google user info' });
+    }
+  } catch (err) {
+    console.log(err.message);
+    return reply.code(500).send({ error: 'Failed to fetch google user info '+ err.message });
   }
 
   const googleUser = userInfoRes.data;
