@@ -191,8 +191,6 @@ const googleAuth = async (req, reply) => {
       return reply.code(500).send({ error: 'Default role not found' });
     }
 
-    const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
-
     const newUser = {
       email,
       fullName: name,
@@ -202,7 +200,9 @@ const googleAuth = async (req, reply) => {
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
+    const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
+
+    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
     
     return reply.redirect(redirectTo, 302);
   } else {
@@ -212,7 +212,7 @@ const googleAuth = async (req, reply) => {
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
-    const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
+    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
     
     return reply.redirect(redirectTo, 302);
   }

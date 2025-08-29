@@ -5,7 +5,8 @@
   "scripts": {
     "start": "node api/server.js",
     "dev": "nodemon api/server.js",
-    "seed-demo": "node scripts/seedDemo.js"
+    "seed-demo": "node scripts/seedDemo.js",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -30,6 +31,9 @@
     "yaml": "^2.8.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
     "nodemon": "^3.1.10"
   }
 }

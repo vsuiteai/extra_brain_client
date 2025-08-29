@@ -23,6 +23,7 @@ app.decorate('authenticate', async function (req, reply) {
   try {
     await req.jwtVerify();
   } catch (err) {
+    console.error('Authentication error:', err);
     reply.code(401).send({ error: 'Unauthorized' });
   }
 });
@@ -51,41 +52,42 @@ await app.register(swaggerUI, {
 // Health
 app.get('/health', async () => ({ status: 'ok' }));
 
+
 // KPIs
 // fastify.get('/api/kpis', async () => {
-//   const snapshot = await db.collection('kpis').get();
-//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const snapshot = await db.collection('kpis').get();
+//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 // fastify.get('/api/kpi/:layer', async (req) => {
-//   const { layer } = req.params;
-//   const snapshot = await db.collection('kpis').where('layer', '==', layer).get();
-//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const { layer } = req.params;
+//   const snapshot = await db.collection('kpis').where('layer', '==', layer).get();
+//   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 // fastify.post('/api/kpi', async (req, reply) => {
-//   const data = req.body;
-//   await db.collection('kpis').add(data);
-//   reply.code(201).send({ status: 'success' });
+//   const data = req.body;
+//   await db.collection('kpis').add(data);
+//   reply.code(201).send({ status: 'success' });
 // });
 
 // // Brain
 // fastify.get('/api/personas', async () => {
-//   const snap = await db.collection('personas').get();
-//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const snap = await db.collection('personas').get();
+//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 // fastify.get('/api/prompts/:personaId', async (req) => {
-//   const { personaId } = req.params;
-//   const snap = await db.collection('prompts').where('personaRef', '==', personaId).get();
-//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const { personaId } = req.params;
+//   const snap = await db.collection('prompts').where('personaRef', '==', personaId).get();
+//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 // fastify.get('/api/subPrompts/:promptId', async (req) => {
-//   const { promptId } = req.params;
-//   const snap = await db.collection('subPrompts').where('promptRef', '==', promptId).get();
-//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const { promptId } = req.params;
+//   const snap = await db.collection('subPrompts').where('promptRef', '==', promptId).get();
+//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 // fastify.get('/api/outputInstructions/:promptId', async (req) => {
-//   const { promptId } = req.params;
-//   const snap = await db.collection('outputInstructions').where('context', '>=', promptId).get();
-//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+//   const { promptId } = req.params;
+//   const snap = await db.collection('outputInstructions').where('context', '>=', promptId).get();
+//   return snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 // });
 
 await app.register(authRoutes);
