@@ -202,7 +202,22 @@ const googleAuth = async (req, reply) => {
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
 
-    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
+     // 🔐 Set HttpOnly cookies
+    reply
+    .setCookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/'
+    })
+    .setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/'
+    })
+
+    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&id=${newUserDoc.id}`;
     
     return reply.redirect(redirectTo, 302);
   } else {
@@ -212,7 +227,22 @@ const googleAuth = async (req, reply) => {
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
-    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
+    // 🔐 Set HttpOnly cookies
+    reply
+    .setCookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/'
+    })
+    .setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/'
+    })
+
+    const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&id=${userId}`;
     
     return reply.redirect(redirectTo, 302);
   }
@@ -441,6 +471,36 @@ const resetPassword = async (req, reply) => {
   }
 }
 
+const me = async (req, reply) => {
+  const accessToken = req.cookies?.access_token || req.headers['authorization']?.replace('Bearer ', '');
+  if (!accessToken) {
+    return reply.code(401).send({ error: 'Access token missing' });
+  }
+  try {
+    const decoded = req.server.jwt.verify(accessToken);
+    const email = decoded.email;
+    if (!email) {
+      return reply.code(401).send({ error: 'Invalid token' });
+    }
+    const userDoc = await firestore.collection('users')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+    if (userDoc.empty) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+    const user = userDoc.docs[0].data();
+    const userId = userDoc.docs[0].id;
+    // Don't return password
+    // eslint-disable-next-line no-unused-vars
+    const { password, ...userInfo } = user;
+    return { id: userId, ...userInfo };
+  } catch (err) {
+    console.log(err.message);
+    return reply.code(401).send({ error: 'Invalid or expired token' });
+  }
+};
+
 export {
   login,
   signUp,
@@ -449,5 +509,6 @@ export {
   microsoftAuth,
   forgotPassword,
   resetPassword,
-  googleLogin
+  googleLogin,
+  me
 };

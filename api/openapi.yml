@@ -74,38 +74,34 @@ paths:
           description: Invalid refresh token
 
   /api/auth/google:
-    post:
-      summary: Google OAuth login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                idToken:
-                  type: string
+    get:
+      summary: Google OAuth callback
       responses:
         '200':
-          description: Google login success
+          description: Google OAuth callback handled
         '400':
-          description: Invalid token
-      get:
-        summary: Google OAuth callback
-        responses:
-          '200':
-            description: Google OAuth callback handled
-          '400':
-            description: Invalid callback
+          description: Invalid callback
 
-    /api/auth/google-login:
-      get:
-        summary: Google OAuth login page
-        responses:
-          '200':
-            description: Google login page
-          '400':
-            description: Invalid request
+  /api/auth/google-login:
+    get:
+      summary: Google OAuth login page
+      responses:
+        '200':
+          description: Google login page
+        '400':
+          description: Invalid request
+  /api/auth/me:
+    get:
+      summary: Get current authenticated user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User profile
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
   /api/auth/microsoft:
     post:
       summary: Microsoft OAuth login

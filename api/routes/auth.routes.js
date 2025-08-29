@@ -7,7 +7,8 @@ import {
   signUp,
   forgotPassword,
   resetPassword,
-  googleLogin
+  googleLogin,
+  me
 } from '../controllers/auth.controllers.js';
 
 export default fp(async (fastify) => {
@@ -19,4 +20,5 @@ export default fp(async (fastify) => {
   fastify.post('/api/auth/microsoft', microsoftAuth);
   fastify.post('/api/auth/forgot-password', forgotPassword)
   fastify.post('/api/auth/reset-password', resetPassword);
+  fastify.get('/api/auth/me', { preHandler: [fastify.authenticate] }, me);
 });
