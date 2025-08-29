@@ -73,24 +73,6 @@ paths:
         '401':
           description: Invalid refresh token
 
-  /api/auth/logout:
-    post:
-      summary: Logout user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                refreshToken:
-                  type: string
-      responses:
-        '200':
-          description: Logged out
-        '401':
-          description: Invalid refresh token
-
   /api/auth/google:
     post:
       summary: Google OAuth login

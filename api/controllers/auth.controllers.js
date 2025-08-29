@@ -39,11 +39,6 @@ const login = async (req, reply) => {
 
   const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
-  // Persist refresh token (could be array for multi-device support)
-  await firestore.collection('users').doc(userId).update({
-    refreshTokens: refreshToken,
-  });
-
   return { id: userId, ...user, accessToken, refreshToken };
 }
 
@@ -111,48 +106,13 @@ const refreshTokens = (app) => async (req, reply) => {
 
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
-    if (!user.refreshTokens?.includes(refreshToken)) {
-      return reply.code(401).send({ error: 'Refresh token revoked' });
-    }
 
     const { accessToken, refreshToken: newRefreshToken } = app.generateTokens({ ...user});
-
-    await firestore.collection('users').doc(userDoc.docs[0].id).update({
-      refreshTokens: newRefreshToken,
-    })
 
     return { id: userId, ...user, accessToken, refreshToken: newRefreshToken };
   } catch (err) {
     console.log(err.message);
     return reply.code(401).send({ error: 'Invalid refresh token' });
-  }
-}
-
-const logout = (app) => async (req, reply) => {
-  const { refreshToken } = req.body;
-  if (!refreshToken) return reply.code(400).send({ error: 'Refresh token is required' });
-
-  try {
-    const decoded = app.jwt.verify(refreshToken);
-    const userDoc = await firestore.collection('users')
-      .where('email', '==', decoded.email)
-      .limit(1)
-      .get();
-    if (userDoc.empty) return reply.code(401).send({ error: 'Invalid refresh token' });
-
-    const user = userDoc.docs[0].data();
-    if (user.refreshTokens === refreshToken) {
-      return reply.code(401).send({ error: 'Refresh token already revoked' });
-    }
-
-    await firestore.collection('users').doc(userDoc.docs[0].id).update({
-      refreshTokens: '',
-    })
-
-    return { ok: true, message: 'Logged out successfully' };
-  } catch (err) {
-    console.log(err.message);
-    return reply.code(401).send({ error: 'Invalid refresh token'});
   }
 }
 
@@ -239,15 +199,12 @@ const googleAuth = async (req, reply) => {
       avatar: picture,
       role: roleDoc.docs[0].data(),
       createdAt: new Date().toISOString(),
-      refreshTokens: refreshToken,
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
     const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${newUserDoc.id}`;
     
     return reply.redirect(redirectTo, 302);
-
-    // return { id: newUserDoc.id, ...newUser, accessToken, refreshToken };
   } else {
     // Existing user, log in
     const user = userDoc.docs[0].data();
@@ -255,15 +212,9 @@ const googleAuth = async (req, reply) => {
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
 
-    await firestore.collection('users').doc(userId).update({
-      refreshTokens: refreshToken,
-    });
-
     const redirectTo = `${process.env.FRONTEND_URL}/${state ? encodeURIComponent(state) : ''}?response=google_success&accessToken=${accessToken}&refreshToken=${refreshToken}&id=${userId}`;
     
     return reply.redirect(redirectTo, 302);
-
-    // return { id: userId, ...user, accessToken, refreshToken };
   }
 }
 
@@ -305,7 +256,6 @@ const microsoftAuth = async (req, reply) => {
       }
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
-      newUser.refreshTokens = refreshToken;
 
       const newUserDoc = await firestore.collection('users').add(newUser);
 
@@ -319,10 +269,6 @@ const microsoftAuth = async (req, reply) => {
       }
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
-
-      await firestore.collection('users').doc(userId).update({
-        refreshTokens: refreshToken,
-      });
 
       return { id: userId, ...user, accessToken, refreshToken };
     }
@@ -499,7 +445,6 @@ export {
   login,
   signUp,
   refreshTokens,
-  logout,
   googleAuth,
   microsoftAuth,
   forgotPassword,
