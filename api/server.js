@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import Fastify from 'fastify';
 import { generateTokens } from './lib/utils.js';
+import fastifyCookie from '@fastify/cookie'
 import cors from '@fastify/cors';
 import multipart from "@fastify/multipart";
 import formbody from '@fastify/formbody';
@@ -17,6 +18,10 @@ const app = Fastify({ logger: true });
 await app.register(cors, { origin: true });
 await app.register(formbody);
 await app.register(multipart);
+await app.register(fastifyCookie, {
+  secret: process.env.COOKIE_SECRET,
+  hook: 'onRequest'
+})
 await app.register(jwt, { secret: process.env.JWT_SECRET || 'supersecret' });
 app.decorate('generateTokens', (payload) => generateTokens(app, payload));
 app.decorate('authenticate', async function (req, reply) {
