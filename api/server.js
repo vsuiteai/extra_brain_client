@@ -15,7 +15,10 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 
 const app = Fastify({ logger: true });
-await app.register(cors, { origin: true });
+await app.register(cors, {
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+});
 await app.register(formbody);
 await app.register(multipart);
 await app.register(fastifyCookie, {
