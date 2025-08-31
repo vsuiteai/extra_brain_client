@@ -18,7 +18,7 @@ const app = Fastify({ logger: true });
 await app.register(cors, {
   origin: true,
   credentials: true,
-  methods: '*'
+  methods: 'GET, POST, PUT, DELETE'
 });
 await app.register(formbody);
 await app.register(multipart);
