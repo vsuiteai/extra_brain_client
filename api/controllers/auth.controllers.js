@@ -37,9 +37,11 @@ const login = async (req, reply) => {
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return reply.code(401).send({ error: 'Invalid email or password' });
 
-  const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
+  const userToTokenize = { id: userId, email, fullName: user.fullName };
 
-  return { id: userId, ...user, accessToken, refreshToken };
+  const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
+
+  return { ...userToTokenize, accessToken, refreshToken };
 }
 
 const signUp = async (req, reply) => {
@@ -107,9 +109,11 @@ const refreshTokens = (app) => async (req, reply) => {
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
 
-    const { accessToken, refreshToken: newRefreshToken } = app.generateTokens({ ...user});
+    const userToTokenize = { id: userId, email: user.email, fullName: user.fullName };
 
-    return { id: userId, ...user, accessToken, refreshToken: newRefreshToken };
+    const { accessToken, refreshToken: newRefreshToken } = app.generateTokens(userToTokenize);
+
+    return { ...userToTokenize, accessToken, refreshToken: newRefreshToken };
   } catch (err) {
     console.log(err.message);
     return reply.code(401).send({ error: 'Invalid refresh token' });
@@ -200,7 +204,9 @@ const googleAuth = async (req, reply) => {
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
+    const userToTokenize = { id: newUserDoc.id, email, fullName: name };
+
+    const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
      // 🔐 Set HttpOnly cookies
     reply
@@ -225,7 +231,9 @@ const googleAuth = async (req, reply) => {
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
 
-    const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
+    const userToTokenize = { id: userId, email, fullName: user.fullName };
+
+    const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
 
     // 🔐 Set HttpOnly cookies
     reply
@@ -285,11 +293,13 @@ const microsoftAuth = async (req, reply) => {
         createdAt: new Date().toISOString(),
       }
 
-      const { accessToken, refreshToken } = req.server.generateTokens({ ...newUser });
-
       const newUserDoc = await firestore.collection('users').add(newUser);
 
-      return { id: newUserDoc.id, ...newUser, accessToken, refreshToken };
+      const userToTokenize = { id: newUserDoc.id, email, fullName: name };
+
+      const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
+
+      return { ...userToTokenize, accessToken, refreshToken };
     } else {
       // Existing user, log in
       const user = userDoc.docs[0].data();
@@ -298,9 +308,11 @@ const microsoftAuth = async (req, reply) => {
         return reply.code(400).send({ error: 'Microsoft ID does not match' });
       }
 
-      const { accessToken, refreshToken } = req.server.generateTokens({ ...user });
+      const userToTokenize = { id: userId, email, fullName: user.fullName };
 
-      return { id: userId, ...user, accessToken, refreshToken };
+      const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
+
+      return { ...userToTokenize, accessToken, refreshToken };
     }
   } catch (err) {
     console.log(err.message);
