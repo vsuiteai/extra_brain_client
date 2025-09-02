@@ -45,7 +45,7 @@ app.decorate('authenticate', async function (req, reply) {
       return reply.code(401).send({ error: 'No token provided' });
     }
 
-    const decoded = await req.jwtVerify({ token });
+    const decoded = await req.server.jwt.verify(token);
     req.user = decoded;
   } catch (err) {
     console.error('Authentication error:', err);
