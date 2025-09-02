@@ -41,7 +41,7 @@ const login = async (req, reply) => {
 
   const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
-  return { ...userToTokenize, accessToken, refreshToken };
+  return { id: userId, ...user, accessToken, refreshToken };
 }
 
 const signUp = async (req, reply) => {
