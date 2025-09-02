@@ -243,13 +243,15 @@ const googleAuth = async (req, reply) => {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      domain: '.vsuite.ai'
     })
     .setCookie('refresh_token', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
-      path: '/'
+      path: '/',
+      domain: '.vsuite.ai'
     })
 
     const redirectTo = `${process.env.FRONTEND_URL}/dashboard/${state ? encodeURIComponent(state) : ''}?response=google_success&id=${userId}`;
