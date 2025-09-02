@@ -77,14 +77,15 @@ const signUp = async (req, reply) => {
     if (roleDoc.empty) {
       return reply.code(500).send({ error: 'Default role not found'})
     }
-
+    const roleData = roleDoc.docs[0].data();
     const hashedPassword = await bcrypt.hash(password, 10);
     const newUser = {
       email,
       password: hashedPassword,
       companyName,
       fullName,
-      role: roleDoc.docs[0].data(),
+      roleName: roleData.name,
+      role: roleData,
       createdAt: new Date().toISOString(),
     }
 
@@ -194,12 +195,13 @@ const googleAuth = async (req, reply) => {
     if (roleDoc.empty) {
       return reply.code(500).send({ error: 'Default role not found' });
     }
-
+    const roleData = roleDoc.docs[0].data();
     const newUser = {
       email,
       fullName: name,
       avatar: picture,
-      role: roleDoc.docs[0].data(),
+      roleName: roleData.name,
+      role: roleData,
       createdAt: new Date().toISOString(),
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
@@ -284,12 +286,13 @@ const microsoftAuth = async (req, reply) => {
       if (roleDoc.empty) {
         return reply.code(500).send({ error: 'Default role not found' });
       }
-
+      const roleData = roleDoc.docs[0].data();
       const newUser = {
         email,
         fullName: name,
         microsoftId,
-        role: roleDoc.docs[0].data(),
+        roleName: roleData.name,
+        role: roleData,
         createdAt: new Date().toISOString(),
       }
 
