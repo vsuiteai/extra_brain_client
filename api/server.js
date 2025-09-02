@@ -24,7 +24,8 @@ await app.register(formbody);
 await app.register(multipart);
 await app.register(fastifyCookie, {
   secret: process.env.COOKIE_SECRET,
-  hook: 'onRequest'
+  hook: 'onRequest',
+  domain: '.vsuite.ai'
 })
 await app.register(jwt, { secret: process.env.JWT_SECRET || 'supersecret' });
 app.decorate('generateTokens', (payload) => generateTokens(app, payload));
