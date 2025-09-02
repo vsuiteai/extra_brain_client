@@ -31,7 +31,22 @@ await app.register(jwt, { secret: process.env.JWT_SECRET || 'supersecret' });
 app.decorate('generateTokens', (payload) => generateTokens(app, payload));
 app.decorate('authenticate', async function (req, reply) {
   try {
-    await req.jwtVerify();
+    let token;
+
+    if (req.cookies?.access_token) {
+      token = req.cookies.access_token;
+    }
+
+    else if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (!token) {
+      return reply.code(401).send({ error: 'No token provided' });
+    }
+
+    const decoded = await req.jwtVerify({ token });
+    req.user = decoded;
   } catch (err) {
     console.error('Authentication error:', err);
     reply.code(401).send({ error: 'Unauthorized' });
