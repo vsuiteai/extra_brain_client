@@ -484,12 +484,8 @@ const resetPassword = async (req, reply) => {
 }
 
 const me = async (req, reply) => {
-  const accessToken = req.cookies?.access_token || req.headers['authorization']?.replace('Bearer ', '');
-  if (!accessToken) {
-    return reply.code(401).send({ error: 'Access token missing' });
-  }
   try {
-    const decoded = req.server.jwt.verify(accessToken);
+    const decoded = req.user;
     const email = decoded.email;
     if (!email) {
       return reply.code(401).send({ error: 'Invalid token' });
