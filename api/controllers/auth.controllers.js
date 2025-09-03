@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwksClient from 'jwks-rsa';
+import jwt from "jsonwebtoken";
 import sgMail from '@sendgrid/mail';
 import { Firestore } from '@google-cloud/firestore';
 import { OAuth2Client } from 'google-auth-library';
@@ -14,10 +15,12 @@ const msClient = jwksClient({
 });
 const getKey = (header, callback) => {
   msClient.getSigningKey(header.kid, (err, key) => {
+    if (err) return callback(err);
     const signingKey = key.getPublicKey();
     callback(null, signingKey);
-  })
-}
+  });
+};
+
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -265,13 +268,15 @@ const microsoftAuth = async (req, reply) => {
 
     // Verify the ID token with Microsoft
     const decoded = await new Promise((resolve, reject) => {
-      req.server.jwt.verify(idToken, { issuer: msIssuer, audience: microsoftClientId }, getKey, (err, decoded) => {
+      jwt.verify(idToken, getKey, { issuer: msIssuer, audience: microsoftClientId }, (err, decoded) => {
         if (err) return reject(err);
         resolve(decoded);
       })
     });
 
-    const { oid: microsoftId, email, name } = decoded;
+    const microsoftId = decoded.oid;
+    const email = decoded.email || decoded.preferred_username;
+    const name = decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim();
 
     const userDoc = await firestore.collection('users')
       .where('email', '==', email)

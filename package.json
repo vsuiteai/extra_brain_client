@@ -26,6 +26,7 @@
     "fastify": "^5.5.0",
     "fastify-plugin": "^5.0.1",
     "google-auth-library": "^10.3.0",
+    "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
