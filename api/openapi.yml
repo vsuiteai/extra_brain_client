@@ -352,3 +352,125 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  
+  # Companies endpoints
+  
+/api/companies:
+  get:
+    summary: Get all companies (paginated)
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+        description: Number of companies to return (default 20)
+      - name: lastDoc
+        in: query
+        required: false
+        schema:
+          type: string
+        description: Document ID of the last company from previous page (for pagination)
+    responses:
+      '200':
+        description: List of companies
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                companies:
+                  type: array
+                  items:
+                    type: object
+                lastDoc:
+                  type: string
+      '401':
+        description: Unauthorized
+  post:
+    summary: Create a new company
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              CompanyID:
+                type: string
+              # ...other company fields...
+    responses:
+      '201':
+        description: Company created
+      '400':
+        description: CompanyID required
+      '401':
+        description: Unauthorized
+
+/api/companies/{id}:
+  get:
+    summary: Get a company by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Company data
+        content:
+          application/json:
+            schema:
+              type: object
+      '401':
+        description: Unauthorized
+      '404':
+        description: Not found
+  put:
+    summary: Update a company by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            # ...fields to update...
+    responses:
+      '200':
+        description: Company updated
+      '401':
+        description: Unauthorized
+      '404':
+        description: Not found
+  delete:
+    summary: Delete a company by ID
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Company deleted
+      '401':
+        description: Unauthorized
+      '404':
+        description: Not found
