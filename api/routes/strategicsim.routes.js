@@ -9,7 +9,8 @@ import {
   searchSimulations,
   createSimulation,
   generateDeliverablesPDF,
-  runScenarioSensitivity
+  runScenarioSensitivity,
+  recommendOptimalStrategy
 } from '../controllers/strategicsim.controllers.js';
 
 
@@ -23,4 +24,5 @@ export default fp(async (fastify) => {
   fastify.post('/api/strategicSim/simulations/:companyId', { preHandler: [fastify.authenticate] }, createSimulation);
   fastify.post('/api/strategicSim/simulations/:companyId/deliverables', { preHandler: [fastify.authenticate] }, generateDeliverablesPDF);
   fastify.post('/api/strategicSim/simulations/:companyId/sensitivity', { preHandler: [fastify.authenticate] }, runScenarioSensitivity);
+  fastify.get('/api/strategicSim/simulations/:companyId/recommend-optimal', { preHandler: [fastify.authenticate] }, recommendOptimalStrategy);
 });

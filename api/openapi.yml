@@ -597,6 +597,50 @@ paths:
         '500':
           description: Failed to compute Scenario ROI
 
+  /api/strategicSim/simulations/{companyId}/recommend-optimal:
+    get:
+      summary: Recommend the optimal strategy for the company based on latest simulation and composite scoring
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recommended strategy with supporting metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      recommendedStrategy:
+                        type: object
+                      compositeScore:
+                        type: number
+                      metrics:
+                        type: object
+                        properties:
+                          scenarioRoiPercent:
+                            type: number
+                          discountRate:
+                            type: number
+                          horizonYears:
+                            type: integer
+                          competitiveIndexScore:
+                            type: number
+                      alternatives:
+                        type: array
+                        items:
+                          type: object
+        '404':
+          description: Company or simulations not found
+
   /api/strategicSim/simulations/{companyId}/search/{query}:
     get:
       summary: Search simulations by name
