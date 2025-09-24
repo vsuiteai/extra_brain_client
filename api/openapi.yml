@@ -423,6 +423,326 @@ paths:
           description: Unauthorized
         '404':
           description: Not found
+
+  # Strategic Simulation (strategicsim) endpoints
+  /api/strategicsim/kpis/{companyId}/market-share:
+    get:
+      summary: Get market share for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Market share value
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      marketShare:
+                        type: string
+                        description: Percentage as a string with two decimals
+                      sources:
+                        type: array
+                        items:
+                          type: string
+        '404':
+          description: Company not found
+        '500':
+          description: Failed to fetch market share
+
+  /api/strategicSim/simulations/{companyId}/{status}:
+    get:
+      summary: Get simulations by status for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [pending, running, completed, failed]
+      responses:
+        '200':
+          description: Simulations list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  simulationsData:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Company not found
+
+  /api/strategicSim/simulations/{companyId}/timeframe/{days}:
+    get:
+      summary: Get simulations updated within the last N days
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: days
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Simulations within timeframe
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Company not found
+
+  /api/strategicSim/simulations/{companyId}/competitive-index-score:
+    get:
+      summary: Calculate and retrieve competitive index score
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Competitive index score and breakdown
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  competitiveIndexScore:
+                    type: number
+                  breakdown:
+                    type: object
+                    properties:
+                      marketShare:
+                        type: number
+                      npsScore:
+                        type: number
+                      winLossRatio:
+                        type: number
+                      competitorBenchmark:
+                        type: number
+        '404':
+          description: Company not found
+
+  /api/strategicSim/simulations/{companyId}/scenario-roi:
+    get:
+      summary: Get scenario ROI metrics from the latest completed simulation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scenario ROI metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      scenarioRoiPercent:
+                        type: number
+                      discountRate:
+                        type: number
+                      horizonYears:
+                        type: integer
+                      baselineNPV:
+                        type: number
+                      scenarioNPV:
+                        type: number
+                      scenarioIRR:
+                        type: number
+        '404':
+          description: Company or simulations not found
+        '500':
+          description: Failed to compute Scenario ROI
+
+  /api/strategicSim/simulations/{companyId}/search/{query}:
+    get:
+      summary: Search simulations by name
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: query
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Matching simulations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '404':
+          description: Company not found
+
+  /api/strategicSim/simulations/{companyId}:
+    post:
+      summary: Create a new strategic simulation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                simulationType:
+                  type: string
+                  description: e.g., divestiture, blue-ocean, pestel, strategic-analysis
+                framework:
+                  type: string
+                  description: e.g., Porter's Five Forces
+                scenario:
+                  type: string
+                  description: e.g., baseline
+      responses:
+        '201':
+          description: Simulation created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  simulationId:
+                    type: string
+                  simulation:
+                    type: object
+        '404':
+          description: Company not found
+        '500':
+          description: Failed to create simulation
+
+  /api/strategicSim/simulations/{companyId}/deliverables:
+    post:
+      summary: Generate deliverables PDF content for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deliverables:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Generated deliverables PDF payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pdf:
+                    type: string
+                    description: PDF binary as a string payload
+        '404':
+          description: Company not found
+
+  /api/strategicSim/simulations/{companyId}/sensitivity:
+    post:
+      summary: Run scenario sensitivity analysis on latest simulation
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sweeps:
+                  type: object
+                  description: Parameters to sweep for sensitivity analysis
+                horizonYears:
+                  type: integer
+      responses:
+        '200':
+          description: Sensitivity analysis results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '404':
+          description: Company or simulations not found
     put:
       summary: Update a company by ID
       security:
