@@ -361,6 +361,59 @@ const generateDeliverablesPDF = async (req, reply) => {
   return reply.code(200).send({ pdf });
 }
 
+// Recommend an optimal strategy using latest simulation + composite score
+const recommendOptimalStrategy = async (req, reply) => {
+  const { companyId } = req.params;
+
+  const companyDoc = await db.collection('companies').doc(companyId).get();
+  if (!companyDoc.exists) return reply.code(404).send({ error: 'Company not found' });
+  const companyData = companyDoc.data();
+
+  // Fetch latest completed simulation
+  const sims = await db.collection('simulations')
+    .where('companyId', '==', companyId)
+    .where('status', '==', 'completed')
+    .orderBy('updatedAt', 'desc')
+    .limit(1)
+    .get();
+
+  if (sims.empty) return reply.code(404).send({ error: 'No completed simulations found for company' });
+
+  const sim = sims.docs[0].data();
+
+  // Compute ROI metrics for composite scoring
+  const roi = await calculateScenarioROI({ companyData, simulationResults: sim.results, horizonYears: 5 });
+
+  // Compute competitive index as part of composite scoring
+  const [ms, nps, wl, cb] = await Promise.all([
+    calculateMarketShare(companyData),
+    getNPSScore(companyData),
+    getWinLossRatio(companyData),
+    getCompetitorBenchmark(companyData)
+  ]);
+  const ci = calculateWeightedScore({ marketShare: Number(ms) || 0, npsScore: Number(nps) || 0, winLossRatio: Number(wl) || 0, competitorBenchmark: Number(cb) || 0 });
+
+  const compositeScore = Number(((0.6 * (roi.scenarioRoiPercent || 0)) + (0.4 * (ci || 0))).toFixed(2));
+
+  // Choose primary recommendation from simulation output if available
+  const recs = Array.isArray(sim?.results?.recommendations) ? sim.results.recommendations : [];
+  const primary = recs[0] || null;
+
+  return reply.code(200).send({
+    data: {
+      recommendedStrategy: primary || { action: 'Further analysis required', rationale: 'No recommendations available from latest simulation' },
+      compositeScore,
+      metrics: {
+        scenarioRoiPercent: roi.scenarioRoiPercent,
+        discountRate: roi.discountRate,
+        horizonYears: roi.horizonYears,
+        competitiveIndexScore: ci
+      },
+      alternatives: recs
+    }
+  });
+}
+
 export {
   getMarketShare,
   getRevenueGrowth,
@@ -371,5 +424,6 @@ export {
   searchSimulations,
   createSimulation,
   runScenarioSensitivity,
-  generateDeliverablesPDF
+  generateDeliverablesPDF,
+  recommendOptimalStrategy
 };
