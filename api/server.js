@@ -14,6 +14,7 @@ import yaml from 'yaml';
 import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import companyRoutes from './routes/companies.routes.js';
+import strategicsimRoutes from './routes/strategicsim.routes.js';
 
 const app = Fastify({ logger: true });
 await app.register(cors, {
@@ -119,6 +120,7 @@ app.get('/health', async () => ({ status: 'ok' }));
 await app.register(authRoutes);
 await app.register(userRoutes);
 await app.register(companyRoutes);
+await app.register(strategicsimRoutes);
 
 const port = process.env.PORT || 8080;
 app.listen({ port, host: '0.0.0.0' });
