@@ -6,13 +6,13 @@ import { createCrayonClient } from "./crayon/index.js";
 import { runGemini, enforceModelPolicy } from "../../services/aiProviders.js";
 
 export const generateDeliverablesContent = async ({ companyData, context, deliverables }) => {
-  const { model } = enforceModelPolicy('admin', 'germini');
+  const { model } = enforceModelPolicy('admin', 'gemini');
   const prompt = `You are producing board-ready deliverables for the company based on the context. For each deliverable in the list, return a concise, high-signal section in Markdown.
 Deliverables: ${JSON.stringify(deliverables)}
 Output (strict JSON only):
 {"company": string, "sections":[{"title": string, "markdown": string}]}`;
 
-  const raw = await runGermini({ model, prompt, context });
+  const raw = await runGemini({ model, prompt, context });
   let cleaned = raw.trim();
   if (cleaned.startsWith('```json')) cleaned = cleaned.replace(/^```json\s*/, '').replace(/\s*```$/, '');
   const m = cleaned.match(/\{[\s\S]*\}/);

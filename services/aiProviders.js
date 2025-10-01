@@ -3,7 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import OpenAI from "openai";
 // import { getSecret } from "../libs/utils.js";
 
-const GEMINI_MODEL_DEFAULT = process.env.AI_DEFAULT_MODEL || "gemini-1.5-flash";
+const GEMINI_MODEL_DEFAULT = process.env.AI_DEFAULT_MODEL || "gemini-2.5-pro-preview-03-25";
 
 export function enforceModelPolicy(role, requestedModel) {
   // employees & clients: force gemini
