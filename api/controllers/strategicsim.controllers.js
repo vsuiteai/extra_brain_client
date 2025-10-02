@@ -231,6 +231,11 @@ const searchSimulations = async (req, reply) => {
 const createSimulation = async (req, reply) => {
   const { companyId } = req.params;
   const { simulationType, framework, scenario } = req.body;
+  const decoded = req.user;
+  const email = decoded.email;
+  if (!email) {
+    return reply.code(401).send({ error: 'Invalid token' });
+  }
   
   try {
     // Get company data
@@ -273,9 +278,19 @@ const createSimulation = async (req, reply) => {
       simulationType: simulationType || 'strategic-analysis',
       scenario: scenario || 'baseline'
     });
-    
-    // Save to Firestore
-    const simulationDoc = await db.collection('simulations').add({
+
+    const userDoc = await firestore.collection('users')
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+    if (userDoc.empty) {
+      return reply.code(404).send({ error: 'User not found' });
+    }
+    const user = userDoc.docs[0].data();
+    const userId = userDoc.docs[0].id;
+    const userObj = { id: userId, ...user };
+
+    const newSimulation = {
       companyId,
       name: simulation.title || `${simulationType} Simulation - ${new Date().toLocaleDateString()}`,
       type: simulationType || 'strategic-analysis',
@@ -283,12 +298,16 @@ const createSimulation = async (req, reply) => {
       status: 'completed',
       results: simulation,
       createdAt: Timestamp.now(),
-      updatedAt: Timestamp.now()
-    });
+      updatedAt: Timestamp.now(),
+      user: userObj
+    }
+    
+    // Save to Firestore
+    const simulationDoc = await db.collection('simulations').add(newSimulation);
     
     return reply.code(201).send({ 
       simulationId: simulationDoc.id,
-      simulation: simulation 
+      simulation: newSimulation 
     });
     
   } catch (error) {
