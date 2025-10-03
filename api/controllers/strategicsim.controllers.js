@@ -13,7 +13,8 @@ import {
   renderPDFBuffer,
   generateDeliverablesContent,
   calculateScenarioROI,
-  runSensitivityAnalysis
+  runSensitivityAnalysis,
+  fetchMetricsViaGeminiResearch
 } from '../lib/utils.js';
 
 const getMarketShare = async (req, reply) => {
@@ -279,7 +280,7 @@ const createSimulation = async (req, reply) => {
       scenario: scenario || 'baseline'
     });
 
-    const userDoc = await firestore.collection('users')
+    const userDoc = await db.collection('users')
       .where('email', '==', email)
       .limit(1)
       .get();
