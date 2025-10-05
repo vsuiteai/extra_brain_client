@@ -14,7 +14,8 @@ import {
   generateDeliverablesContent,
   calculateScenarioROI,
   runSensitivityAnalysis,
-  fetchMetricsViaGeminiResearch
+  fetchMetricsViaGeminiResearch,
+  bucket
 } from '../lib/utils.js';
 
 const getMarketShare = async (req, reply) => {
@@ -369,16 +370,49 @@ const generateDeliverablesPDF = async (req, reply) => {
   const companyData = companyDoc.data();
 
   const context = await buildSimulationContext(companyData);
+  console.log('context', context);
   const content = await generateDeliverablesContent({ companyData, context, deliverables });
+  
+  console.log('Generated content sections:', content.sections?.length || 0);
+  
   const pdf = await renderPDFBuffer({
     title: 'Strategic Deliverables Report',
     companyName: companyData.CompanyName,
     sections: content.sections || []
   });
+  
+  console.log('Generated PDF buffer size:', pdf.length, 'bytes');
 
-  reply.header('Content-Type', 'application/pdf');
-  reply.header('Content-Disposition', `attachment: filename="${companyData.CompanyName} - Strategic Deliverables Report.pdf"`);
-  return reply.code(200).send({ pdf });
+  try {
+    // Upload PDF to Google Cloud Storage
+    const fileName = `deliverables/${companyId}/${companyData.CompanyName.replace(/[^a-zA-Z0-9]/g, '_')}_Strategic_Deliverables_${Date.now()}.pdf`;
+    const file = bucket.file(fileName);
+    
+    console.log('Uploading PDF to:', fileName);
+    
+    await file.save(pdf, {
+      metadata: {
+        contentType: 'application/pdf',
+      },
+    });
+
+    // Get the public URL (since bucket is publicly accessible)
+    const publicUrl = `https://storage.googleapis.com/${bucket.name}/${fileName}`;
+    
+    console.log('PDF uploaded successfully. URL:', publicUrl);
+
+    return reply.code(200).send({
+      success: true,
+      pdfUrl: publicUrl,
+      fileName: `${companyData.CompanyName} - Strategic Deliverables Report.pdf`
+    });
+  } catch (error) {
+    console.error('Error uploading PDF to GCS:', error);
+    return reply.code(500).send({ 
+      error: 'Failed to upload PDF to storage',
+      message: error.message 
+    });
+  }
 }
 
 // Recommend an optimal strategy using latest simulation + composite score
