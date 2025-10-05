@@ -29,11 +29,11 @@
     "fastify-plugin": "^5.0.1",
     "google-auth-library": "^10.3.0",
     "jsonwebtoken": "^9.0.2",
-    "salesforce-oauth2": "^0.7.0",
     "jwks-rsa": "^3.2.0",
     "openai": "^5.22.0",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",
+    "salesforce-oauth2": "^0.2.0",
     "speakeasy": "^2.0.0",
     "yaml": "^2.8.1"
   },

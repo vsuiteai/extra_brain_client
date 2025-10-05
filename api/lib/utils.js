@@ -175,97 +175,97 @@ const getWinLossRatio = async (companyData) => {
 }
 
 // Salesforce win/loss data integration
-const getSalesforceWinLossRatio = async (companyData) => {
-  try {
-    const { SalesforceOAuth2 } = await import('salesforce-oauth2');
-    const axios = await import('axios');
+// const getSalesforceWinLossRatio = async (companyData) => {
+//   try {
+//     const { SalesforceOAuth2 } = await import('salesforce-oauth2');
+//     const axios = await import('axios');
     
-    // Initialize OAuth2 client
-    const oauth2 = new SalesforceOAuth2({
-      clientId: process.env.SALESFORCE_CONSUMER_KEY,
-      clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
-      redirectUri: process.env.SALESFORCE_REDIRECT_URI || 'http://localhost:8080/oauth/callback',
-      environment: process.env.SALESFORCE_LOGIN_URL?.includes('test') ? 'sandbox' : 'production'
-    });
+//     // Initialize OAuth2 client
+//     const oauth2 = new SalesforceOAuth2({
+//       clientId: process.env.SALESFORCE_CONSUMER_KEY,
+//       clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
+//       redirectUri: process.env.SALESFORCE_REDIRECT_URI || 'http://localhost:8080/oauth/callback',
+//       environment: process.env.SALESFORCE_LOGIN_URL?.includes('test') ? 'sandbox' : 'production'
+//     });
 
-    let accessToken;
+//     let accessToken;
     
-    // Try to get access token using stored refresh token first
-    if (process.env.SALESFORCE_REFRESH_TOKEN) {
-      try {
-        const tokenResponse = await oauth2.refreshToken(process.env.SALESFORCE_REFRESH_TOKEN);
-        accessToken = tokenResponse.access_token;
-        console.log('Successfully refreshed Salesforce access token');
-      } catch (refreshError) {
-        console.warn('Failed to refresh Salesforce token:', refreshError.message);
-      }
-    }
+//     // Try to get access token using stored refresh token first
+//     if (process.env.SALESFORCE_REFRESH_TOKEN) {
+//       try {
+//         const tokenResponse = await oauth2.refreshToken(process.env.SALESFORCE_REFRESH_TOKEN);
+//         accessToken = tokenResponse.access_token;
+//         console.log('Successfully refreshed Salesforce access token');
+//       } catch (refreshError) {
+//         console.warn('Failed to refresh Salesforce token:', refreshError.message);
+//       }
+//     }
     
-    // If no refresh token or refresh failed, try username/password flow
-    if (!accessToken && process.env.SALESFORCE_USERNAME && process.env.SALESFORCE_PASSWORD) {
-      try {
-        const tokenResponse = await oauth2.getToken({
-          username: process.env.SALESFORCE_USERNAME,
-          password: process.env.SALESFORCE_PASSWORD + (process.env.SALESFORCE_SECURITY_TOKEN || '')
-        });
-        accessToken = tokenResponse.access_token;
-        console.log('Successfully authenticated with Salesforce using username/password');
-      } catch (authError) {
-        console.warn('Failed to authenticate with Salesforce:', authError.message);
-      }
-    }
+//     // If no refresh token or refresh failed, try username/password flow
+//     if (!accessToken && process.env.SALESFORCE_USERNAME && process.env.SALESFORCE_PASSWORD) {
+//       try {
+//         const tokenResponse = await oauth2.getToken({
+//           username: process.env.SALESFORCE_USERNAME,
+//           password: process.env.SALESFORCE_PASSWORD + (process.env.SALESFORCE_SECURITY_TOKEN || '')
+//         });
+//         accessToken = tokenResponse.access_token;
+//         console.log('Successfully authenticated with Salesforce using username/password');
+//       } catch (authError) {
+//         console.warn('Failed to authenticate with Salesforce:', authError.message);
+//       }
+//     }
     
-    if (!accessToken) {
-      console.warn('No valid Salesforce access token available');
-      return null;
-    }
+//     if (!accessToken) {
+//       console.warn('No valid Salesforce access token available');
+//       return null;
+//     }
     
-    // Query opportunities from Salesforce using REST API
-    const currentYear = new Date().getFullYear();
-    const instanceUrl = process.env.SALESFORCE_INSTANCE_URL || 'https://login.salesforce.com';
+//     // Query opportunities from Salesforce using REST API
+//     const currentYear = new Date().getFullYear();
+//     const instanceUrl = process.env.SALESFORCE_INSTANCE_URL || 'https://login.salesforce.com';
     
-    const query = `
-      SELECT StageName, Amount, CloseDate, IsWon, IsClosed, Account.Name
-      FROM Opportunity 
-      WHERE CloseDate = ${currentYear}
-      AND (Account.Name LIKE '%${companyData.CompanyName}%' OR Account.Website LIKE '%${companyData.domain || ''}%')
-      AND IsClosed = true
-    `;
+//     const query = `
+//       SELECT StageName, Amount, CloseDate, IsWon, IsClosed, Account.Name
+//       FROM Opportunity 
+//       WHERE CloseDate = ${currentYear}
+//       AND (Account.Name LIKE '%${companyData.CompanyName}%' OR Account.Website LIKE '%${companyData.domain || ''}%')
+//       AND IsClosed = true
+//     `;
 
-    const response = await axios.default.get(`${instanceUrl}/services/data/v58.0/query/`, {
-      params: { q: query },
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
+//     const response = await axios.default.get(`${instanceUrl}/services/data/v58.0/query/`, {
+//       params: { q: query },
+//       headers: {
+//         'Authorization': `Bearer ${accessToken}`,
+//         'Content-Type': 'application/json'
+//       }
+//     });
     
-    const result = response.data;
+//     const result = response.data;
     
-    if (!result.records || result.records.length === 0) {
-      console.log('No Salesforce opportunities found for company');
-      return null;
-    }
+//     if (!result.records || result.records.length === 0) {
+//       console.log('No Salesforce opportunities found for company');
+//       return null;
+//     }
 
-    const wins = result.records.filter(opp => opp.IsWon === true).length;
-    const losses = result.records.filter(opp => opp.IsWon === false).length;
+//     const wins = result.records.filter(opp => opp.IsWon === true).length;
+//     const losses = result.records.filter(opp => opp.IsWon === false).length;
     
-    if (wins + losses === 0) {
-      console.log('No closed opportunities found in Salesforce');
-      return null;
-    }
+//     if (wins + losses === 0) {
+//       console.log('No closed opportunities found in Salesforce');
+//       return null;
+//     }
     
-    const winLossRatio = (wins / (wins + losses)) * 100;
+//     const winLossRatio = (wins / (wins + losses)) * 100;
     
-    console.log(`Salesforce win/loss: ${wins} wins, ${losses} losses (ratio: ${winLossRatio.toFixed(2)}%)`);
+//     console.log(`Salesforce win/loss: ${wins} wins, ${losses} losses (ratio: ${winLossRatio.toFixed(2)}%)`);
     
-    return winLossRatio.toFixed(2);
+//     return winLossRatio.toFixed(2);
     
-  } catch (error) {
-    console.error('Error fetching Salesforce win/loss data:', error.message);
-    return null;
-  }
-}
+//   } catch (error) {
+//     console.error('Error fetching Salesforce win/loss data:', error.message);
+//     return null;
+//   }
+// }
 
 // Fallback function for when Crayon is unavailable
 const getFallbackWinLossRatio = (companyData) => {
