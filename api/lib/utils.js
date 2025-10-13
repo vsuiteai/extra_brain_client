@@ -1,13 +1,18 @@
 import PDFDocument from 'pdfkit';
+import { Storage } from "@google-cloud/storage";
 
 import { getLatestTAM, getTAMSegmentSize } from "./statista/tam-segment/index.js";
 import { createMedalliaClient } from "./medallia/index.js";
 import { createCrayonClient } from "./crayon/index.js";
 import { runGemini, enforceModelPolicy } from "../../services/aiProviders.js";
 
+const storage = new Storage();
+const bucketName = "vsuite-objects";
+const bucket = storage.bucket(bucketName);
+
 export const generateDeliverablesContent = async ({ companyData, context, deliverables }) => {
   const { model } = enforceModelPolicy('admin', 'gemini');
-  const prompt = `You are producing board-ready deliverables for the company based on the context. For each deliverable in the list, return a concise, high-signal section in Markdown.
+  const prompt = `You are producing board-ready deliverables for ${companyData.CompanyName || 'the company'} based on the context. For each deliverable in the list, return a concise, high-signal section in Markdown.
 Deliverables: ${JSON.stringify(deliverables)}
 Output (strict JSON only):
 {"company": string, "sections":[{"title": string, "markdown": string}]}`;
@@ -24,7 +29,7 @@ export const renderPDFBuffer = ({ title, companyName, sections }) => {
     try {
       const doc = new PDFDocument({ size: 'LETTER', margin: 50 });
       const chunks = [];
-      doc.on('data', c => chunks.push[c]);
+      doc.on('data', c => chunks.push(c));
       doc.on('end', () => resolve(Buffer.concat(chunks)));
 
       doc.fontSize(20).text(title || 'Strategic Deliverables Report', { align: 'center' });
@@ -137,50 +142,130 @@ const getFallbackNPSScore = (companyData) => {
   return Math.max(0, (npsScore + 100) / 2);
 }
 
-// Crayon Competitor Intelligence API integration for win/loss ratio
+// Salesforce API integration for win/loss ratio
 const getWinLossRatio = async (companyData) => {
   try {
-    // Fallback to Gemini Deep Research if Crayon key is not configured
-    if (!process.env.CRAYON_API_KEY && (!process.env.CRAYON_CLIENT_ID || !process.env.CRAYON_CLIENT_SECRET)) {
-      const research = await fetchMetricsViaGeminiResearch(companyData);
-      const wl = Number(
-        research?.winLossRatio ?? 0
-      )
-      return Number.isFinite(wl) ? wl.toFixed(2) : '0.00';
+    // Try Salesforce first if configured
+    // if (process.env.SALESFORCE_CONSUMER_KEY && process.env.SALESFORCE_CONSUMER_SECRET) {
+    //   const salesforceRatio = await getSalesforceWinLossRatio(companyData);
+    //   if (salesforceRatio !== null) {
+    //     return salesforceRatio;
+    //   }
+    // }
+
+    // Fallback to Gemini Deep Research if Salesforce is not configured or fails
+    const research = await fetchMetricsViaGeminiResearch(companyData);
+    const wl = Number(
+      research?.winLossRatio ?? 0
+    )
+    if (Number.isFinite(wl) && wl > 0) {
+      return wl.toFixed(2);
     }
 
-    // Check if Crayon is configured
-    if (!process.env.CRAYON_API_KEY && (!process.env.CRAYON_CLIENT_ID || !process.env.CRAYON_CLIENT_SECRET)) {
-      console.warn('Crayon not configured, falling back to stored win/loss data');
-      return getFallbackWinLossRatio(companyData);
-    }
-
-    // Create Crayon client
-    const crayonClient = createCrayonClient();
-    
-    // Get win/loss data from Crayon API
-    // Use company domain or name as identifier for Crayon
-    const companyIdentifier = companyData.domain || companyData.CompanyName || companyData.id;
-    const winLossData = await crayonClient.getWinLossData({
-      companyId: companyIdentifier,
-      timeframe: '90d', // Last 90 days
-      includeCompetitors: true
-    });
-
-    // Calculate win/loss ratio percentage
-    const winLossRatio = winLossData.winRate || 0;
-    
-    console.log(`Retrieved win/loss data from Crayon: ${winLossData.wins} wins, ${winLossData.losses} losses (ratio: ${winLossRatio}%)`);
-    
-    return winLossRatio;
+    // Final fallback to stored win/loss data
+    console.warn('Salesforce not configured, using stored win/loss data');
+    return getFallbackWinLossRatio(companyData);
     
   } catch (error) {
-    console.error('Error fetching win/loss data from Crayon:', error.message);
+    console.error('Error fetching win/loss data:', error.message);
     
     // Fallback to stored data or default value
     return getFallbackWinLossRatio(companyData);
   }
 }
+
+// Salesforce win/loss data integration
+// const getSalesforceWinLossRatio = async (companyData) => {
+//   try {
+//     const { SalesforceOAuth2 } = await import('salesforce-oauth2');
+//     const axios = await import('axios');
+    
+//     // Initialize OAuth2 client
+//     const oauth2 = new SalesforceOAuth2({
+//       clientId: process.env.SALESFORCE_CONSUMER_KEY,
+//       clientSecret: process.env.SALESFORCE_CONSUMER_SECRET,
+//       redirectUri: process.env.SALESFORCE_REDIRECT_URI || 'http://localhost:8080/oauth/callback',
+//       environment: process.env.SALESFORCE_LOGIN_URL?.includes('test') ? 'sandbox' : 'production'
+//     });
+
+//     let accessToken;
+    
+//     // Try to get access token using stored refresh token first
+//     if (process.env.SALESFORCE_REFRESH_TOKEN) {
+//       try {
+//         const tokenResponse = await oauth2.refreshToken(process.env.SALESFORCE_REFRESH_TOKEN);
+//         accessToken = tokenResponse.access_token;
+//         console.log('Successfully refreshed Salesforce access token');
+//       } catch (refreshError) {
+//         console.warn('Failed to refresh Salesforce token:', refreshError.message);
+//       }
+//     }
+    
+//     // If no refresh token or refresh failed, try username/password flow
+//     if (!accessToken && process.env.SALESFORCE_USERNAME && process.env.SALESFORCE_PASSWORD) {
+//       try {
+//         const tokenResponse = await oauth2.getToken({
+//           username: process.env.SALESFORCE_USERNAME,
+//           password: process.env.SALESFORCE_PASSWORD + (process.env.SALESFORCE_SECURITY_TOKEN || '')
+//         });
+//         accessToken = tokenResponse.access_token;
+//         console.log('Successfully authenticated with Salesforce using username/password');
+//       } catch (authError) {
+//         console.warn('Failed to authenticate with Salesforce:', authError.message);
+//       }
+//     }
+    
+//     if (!accessToken) {
+//       console.warn('No valid Salesforce access token available');
+//       return null;
+//     }
+    
+//     // Query opportunities from Salesforce using REST API
+//     const currentYear = new Date().getFullYear();
+//     const instanceUrl = process.env.SALESFORCE_INSTANCE_URL || 'https://login.salesforce.com';
+    
+//     const query = `
+//       SELECT StageName, Amount, CloseDate, IsWon, IsClosed, Account.Name
+//       FROM Opportunity 
+//       WHERE CloseDate = ${currentYear}
+//       AND (Account.Name LIKE '%${companyData.CompanyName}%' OR Account.Website LIKE '%${companyData.domain || ''}%')
+//       AND IsClosed = true
+//     `;
+
+//     const response = await axios.default.get(`${instanceUrl}/services/data/v58.0/query/`, {
+//       params: { q: query },
+//       headers: {
+//         'Authorization': `Bearer ${accessToken}`,
+//         'Content-Type': 'application/json'
+//       }
+//     });
+    
+//     const result = response.data;
+    
+//     if (!result.records || result.records.length === 0) {
+//       console.log('No Salesforce opportunities found for company');
+//       return null;
+//     }
+
+//     const wins = result.records.filter(opp => opp.IsWon === true).length;
+//     const losses = result.records.filter(opp => opp.IsWon === false).length;
+    
+//     if (wins + losses === 0) {
+//       console.log('No closed opportunities found in Salesforce');
+//       return null;
+//     }
+    
+//     const winLossRatio = (wins / (wins + losses)) * 100;
+    
+//     console.log(`Salesforce win/loss: ${wins} wins, ${losses} losses (ratio: ${winLossRatio.toFixed(2)}%)`);
+    
+//     return winLossRatio.toFixed(2);
+    
+//   } catch (error) {
+//     console.error('Error fetching Salesforce win/loss data:', error.message);
+//     return null;
+//   }
+// }
 
 // Fallback function for when Crayon is unavailable
 const getFallbackWinLossRatio = (companyData) => {
@@ -334,8 +419,8 @@ const buildSimulationContext = async (companyData) => {
   try {
     // Gather all relevant data points
     const [baseMarketShare, baseNpsScore, baseWinLossRatio, baseCompetitorBenchmark] = await Promise.all([
-      calculateMarketShare(companyData),
-      getNPSScore(companyData),
+      companyData.Financials?.MarketShare || calculateMarketShare(companyData),
+      companyData.vSuiteLayers?.BrandIdentity?.NPS || getNPSScore(companyData),
       getWinLossRatio(companyData),
       getCompetitorBenchmark(companyData)
     ]);
@@ -491,7 +576,7 @@ Ensure the analysis is:
 
 Return ONLY the JSON object, no additional text.`;
 
-    const { provider, model } = enforceModelPolicy('admin', 'gemini');
+    const { model } = enforceModelPolicy('admin', 'gemini');
     
     const result = await runGemini({
       model,
@@ -500,9 +585,9 @@ Return ONLY the JSON object, no additional text.`;
     });
     
     // Parse the JSON response
+    let cleanedResult = result.trim();
     try {      
       // Clean the response - remove markdown code blocks if present
-      let cleanedResult = result.trim();
       
       // Remove ```json and ``` markers
       if (cleanedResult.startsWith('```json')) {
@@ -763,3 +848,6 @@ export {
   calculateScenarioROI,
   runSensitivityAnalysis
 };
+
+// Export storage components for use in controllers
+export { storage, bucket };

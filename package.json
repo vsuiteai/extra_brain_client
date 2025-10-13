@@ -34,6 +34,7 @@
     "openai": "^5.22.0",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",
+    "salesforce-oauth2": "^0.2.0",
     "speakeasy": "^2.0.0",
     "xero-node": "^13.1.0",
     "yaml": "^2.8.1"
