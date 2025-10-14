@@ -8,7 +8,669 @@ servers:
   - url: "http://localhost:5001"
   - url: "https://vsuite-service-prod-1046215561949.us-central1.run.app"
 
+tags:
+  - name: "Intuit – Quickbooks"
+  - name: "Xero"
+  - name: "Gusto"
+  - name: "Sales Force"
+
 paths:
+  /api/integrations/gusto/connect:
+    get:
+      summary: Start Gusto OAuth 2.0 flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to Gusto authorization
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to start Gusto OAuth
+
+  /api/integrations/gusto/callback:
+    get:
+      summary: Gusto OAuth callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Gusto connected
+        '400':
+          description: Missing or invalid parameters
+        '500':
+          description: Failed to complete Gusto OAuth
+
+  /api/integrations/quickbooks/connect:
+    get:
+      summary: Start QuickBooks OAuth 2.0 flow
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to QuickBooks authorization
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to start QuickBooks OAuth
+
+  /api/integrations/quickbooks/callback:
+    get:
+      summary: QuickBooks OAuth callback
+      tags:
+        - Intuit – Quickbooks
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: realmId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: QuickBooks connected
+        '400':
+          description: Missing or invalid parameters
+        '500':
+          description: Failed to complete QuickBooks OAuth
+
+  /api/integrations/quickbooks/accounts:
+    get:
+      summary: List QuickBooks accounts (Chart of Accounts)
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Accounts
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks accounts
+
+  /api/integrations/quickbooks/customers:
+    get:
+      summary: List QuickBooks customers
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Customers
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks customers
+
+  /api/integrations/quickbooks/vendors:
+    get:
+      summary: List QuickBooks vendors
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Vendors
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks vendors
+
+  /api/integrations/quickbooks/items:
+    get:
+      summary: List QuickBooks items
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Items
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks items
+
+  /api/integrations/quickbooks/invoices:
+    get:
+      summary: List QuickBooks invoices
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Invoices
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks invoices
+
+  /api/integrations/quickbooks/bills:
+    get:
+      summary: List QuickBooks bills
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Bills
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks bills
+
+  /api/integrations/quickbooks/payments:
+    get:
+      summary: List QuickBooks payments
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Payments
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks payments
+
+  /api/integrations/quickbooks/journals:
+    get:
+      summary: List QuickBooks journals
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Journals
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks journals
+
+  /api/integrations/quickbooks/general-ledger:
+    get:
+      summary: QuickBooks General Ledger report
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: General ledger report
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch QuickBooks general ledger
+
+  /api/integrations/xero/connect:
+    get:
+      summary: Start Xero OAuth 2.0 flow
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to Xero authorization
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to start Xero OAuth
+
+  /api/integrations/xero/callback:
+    get:
+      summary: Xero OAuth callback
+      tags:
+        - Xero
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Xero connected
+        '400':
+          description: Missing or invalid parameters
+        '500':
+          description: Failed to complete Xero OAuth
+
+  /api/integrations/xero/accounts:
+    get:
+      summary: List Xero accounts (Chart of Accounts)
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Accounts
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero accounts
+
+  /api/integrations/xero/contacts:
+    get:
+      summary: List Xero contacts
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Contacts
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero contacts
+
+  /api/integrations/xero/items:
+    get:
+      summary: List Xero items
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Items
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero items
+
+  /api/integrations/xero/invoices:
+    get:
+      summary: List Xero invoices (type ACCREC for sales, ACCPAY for bills)
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            description: ACCREC (invoices) or ACCPAY (bills)
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Optional invoice status filter
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoices
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero invoices
+
+  /api/integrations/xero/payments:
+    get:
+      summary: List Xero payments
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payments
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero payments
+
+  /api/integrations/xero/journals:
+    get:
+      summary: List Xero journals
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Journals
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Xero journals
+
+  /api/integrations/salesforce/connect:
+    get:
+      summary: Start Salesforce OAuth 2.0 flow
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to Salesforce authorization
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to start Salesforce OAuth
+
+  /api/integrations/salesforce/callback:
+    get:
+      summary: Salesforce OAuth callback
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Salesforce connected
+        '400':
+          description: Missing or invalid parameters
+        '500':
+          description: Failed to complete Salesforce OAuth
+
+  /api/integrations/salesforce/customers:
+    get:
+      summary: List Salesforce customers (Accounts typed as Customer)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Customers
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce customers
+
+  /api/integrations/salesforce/vendors:
+    get:
+      summary: List Salesforce vendors (Accounts typed as Vendor/Supplier)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Vendors
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce vendors
+
+  /api/integrations/salesforce/items:
+    get:
+      summary: List Salesforce items (Product2)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Items
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce items
+
+  /api/integrations/salesforce/invoices:
+    get:
+      summary: List Salesforce invoices (dynamic object detection)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoices
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce invoices
+
+  /api/integrations/salesforce/bills:
+    get:
+      summary: List Salesforce bills/payables (dynamic object detection)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Bills
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce bills
+
+  /api/integrations/salesforce/payments:
+    get:
+      summary: List Salesforce payments (dynamic object detection)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payments
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce payments
+
+  /api/integrations/salesforce/chart-of-accounts:
+    get:
+      summary: List Salesforce Chart of Accounts (dynamic object detection)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Chart of Accounts
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce chart of accounts
+
+  /api/integrations/salesforce/general-ledger:
+    get:
+      summary: List Salesforce General Ledger entries (dynamic object detection)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: object
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: General ledger entries
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Salesforce general ledger
+
+  /api/integrations/gusto/disconnect:
+    post:
+      summary: Disconnect Gusto for current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Disconnected
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to disconnect
   /api/auth/login:
     post:
       summary: User login

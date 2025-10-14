@@ -15,6 +15,11 @@ import authRoutes from './routes/auth.routes.js';
 import userRoutes from './routes/user.routes.js';
 import companyRoutes from './routes/companies.routes.js';
 import strategicsimRoutes from './routes/strategicsim.routes.js';
+import xeroRoutes from './routes/xero.routes.js';
+import netsuiteRoutes from './routes/netsuite.routes.js';
+import quickbooksRoutes from './routes/quickbooks.routes.js';
+import gustoRoutes from './routes/gusto.routes.js';
+import salesforceRoutes from './routes/salesforce.routes.js';
 
 const app = Fastify({ logger: true });
 await app.register(cors, {
@@ -121,6 +126,11 @@ await app.register(authRoutes);
 await app.register(userRoutes);
 await app.register(companyRoutes);
 await app.register(strategicsimRoutes);
+await app.register(xeroRoutes);
+await app.register(netsuiteRoutes);
+await app.register(quickbooksRoutes);
+await app.register(gustoRoutes);
+await app.register(salesforceRoutes);
 
 const port = process.env.PORT || 8080;
 app.listen({ port, host: '0.0.0.0' });
