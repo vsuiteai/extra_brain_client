@@ -56,6 +56,103 @@ paths:
         '500':
           description: Failed to complete Gusto OAuth
 
+  /api/integrations/gusto/companies:
+    get:
+      summary: List Gusto companies
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Companies
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Gusto companies
+
+  /api/integrations/gusto/company:
+    get:
+      summary: Get a Gusto company by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Company data
+        '400':
+          description: Missing companyId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Gusto company
+
+  /api/integrations/gusto/employees:
+    get:
+      summary: List Gusto employees for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Employees
+        '400':
+          description: Missing companyId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Gusto employees
+
+  /api/integrations/gusto/payrolls:
+    get:
+      summary: List Gusto payrolls for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Payrolls
+        '400':
+          description: Missing companyId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Gusto payrolls
+
+  /api/integrations/gusto/locations:
+    get:
+      summary: List Gusto locations for a company
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Locations
+        '400':
+          description: Missing companyId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch Gusto locations
+
   /api/integrations/quickbooks/connect:
     get:
       summary: Start QuickBooks OAuth 2.0 flow
