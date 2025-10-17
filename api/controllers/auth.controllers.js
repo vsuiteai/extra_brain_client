@@ -44,7 +44,23 @@ const login = async (req, reply) => {
 
   const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
-  return { id: userId, ...user, accessToken, refreshToken };
+  return reply
+    .setCookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      domain: '.vsuite.ai',
+    })
+    .setCookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'none',
+      path: '/',
+      domain: '.vsuite.ai',
+    })
+    .code(200)
+    .send({ id: userId, ...user });
 }
 
 const signUp = async (req, reply) => {
