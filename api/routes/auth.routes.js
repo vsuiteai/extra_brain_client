@@ -8,7 +8,8 @@ import {
   forgotPassword,
   resetPassword,
   googleLogin,
-  me
+  me,
+  logout
 } from '../controllers/auth.controllers.js';
 
 export default fp(async (fastify) => {
@@ -21,4 +22,5 @@ export default fp(async (fastify) => {
   fastify.post('/api/auth/forgot-password', forgotPassword)
   fastify.post('/api/auth/reset-password', resetPassword);
   fastify.get('/api/auth/me', { preHandler: [fastify.authenticate] }, me);
+  fastify.post('/api/auth/logout', logout);
 });
