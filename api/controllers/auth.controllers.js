@@ -551,6 +551,31 @@ const me = async (req, reply) => {
   }
 };
 
+const logout = async (req, reply) => {
+  try {
+    return reply
+      .clearCookie('access_token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain: '.vsuite.ai',
+        path: '/',
+      })
+      .clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none',
+        domain: '.vsuite.ai',
+        path: '/',
+      })
+      .code(200)
+      .send({ ok: true });
+  } catch (err) {
+    console.log(err.message);
+    return reply.code(500).send({ error: 'Logout failed' });
+  }
+};
+
 export {
   login,
   signUp,
@@ -560,5 +585,6 @@ export {
   forgotPassword,
   resetPassword,
   googleLogin,
-  me
+  me,
+  logout
 };
