@@ -51,7 +51,7 @@ export const netsuiteConnect = async (req, reply) => {
     authorizeUrl.searchParams.set('scope', NETSUITE_SCOPES);
     authorizeUrl.searchParams.set('state', state);
 
-    return reply.redirect(authorizeUrl.toString());
+    return reply.code(200).send({ redirectUrl: authorizeUrl.toString() });
   } catch (e) {
     req.log.error(e, 'NetSuite connect error');
     return reply.code(500).send({ error: 'Failed to start NetSuite OAuth', details: e.message });
@@ -122,7 +122,7 @@ export const netsuiteCallback = async (req, reply) => {
       updatedAt: new Date()
     });
 
-    return reply.code(200).send({ status: 'connected', realm: realm || null });
+    return reply.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?integration=netsuite&status=connected&realm=${realm}`, 302);
   } catch (e) {
     req.log.error(e, 'NetSuite callback error');
     return reply.code(500).send({ error: 'Failed to complete NetSuite OAuth', details: e.message });

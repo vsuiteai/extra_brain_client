@@ -39,7 +39,8 @@ export const xeroConnect = async (req, reply) => {
     const consentUrl = await xero.buildConsentUrl();
     const url = new URL(consentUrl);
     url.searchParams.set('state', state);
-    return reply.redirect(url.toString());
+
+    return reply.code(200).send({ redirectUrl: url.toString() });
   } catch (e) {
     req.log.error(e, 'Xero connect error');
     return reply.code(500).send({ error: 'Failed to start Xero OAuth', details: e.message });
@@ -92,7 +93,7 @@ export const xeroCallback = async (req, reply) => {
       updatedAt: new Date()
     });
 
-    return reply.code(200).send({ status: 'connected', tenant: tenant || null });
+    return reply.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?integration=xero&status=connected&tenant=${tenant}`, 302);
   } catch (e) {
     req.log.error(e, 'Xero callback error');
     return reply.code(500).send({ error: 'Failed to complete Xero OAuth', details: e.message });

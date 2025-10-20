@@ -1,3 +1,17 @@
+/**
+ * Authentication controllers
+ *
+ * Endpoints:
+ * - POST /api/auth/login: Authenticate with email/password, sets HttpOnly cookies and returns tokens.
+ * - POST /api/auth/signup: Create a new user account.
+ * - POST /api/auth/refresh-token: Exchange refresh token for new access token.
+ * - GET  /api/auth/me: Return current authenticated user profile.
+ * - GET  /api/auth/google-login: Start Google OAuth (redirect).
+ * - GET  /api/auth/google: Google OAuth callback; sets cookies and redirects to frontend.
+ * - POST /api/auth/microsoft: Microsoft OAuth login with ID token.
+ * - POST /api/auth/forgot-password: Send password reset email.
+ * - POST /api/auth/reset-password: Reset password with token.
+ */
 import bcrypt from 'bcryptjs';
 import jwksClient from 'jwks-rsa';
 import jwt from "jsonwebtoken";
@@ -60,7 +74,7 @@ const login = async (req, reply) => {
       domain: '.vsuite.ai',
     })
     .code(200)
-    .send({ id: userId, ...user });
+    .send({ id: userId, ...user, accessToken, refreshToken });
 }
 
 const signUp = async (req, reply) => {

@@ -1,5 +1,26 @@
 import OAuthClient from 'intuit-oauth';
+import axios from 'axios';
 import { db } from '../firestore.js';
+
+// Removed unused parseQbResponse after switching to Axios helper
+
+function getQbBaseUrl(env) {
+  return env === 'production'
+    ? 'https://quickbooks.api.intuit.com'
+    : 'https://sandbox-quickbooks.api.intuit.com';
+}
+
+async function qbAxiosGet({ accessToken, url }) {
+  const res = await axios.get(url, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: 'application/json'
+    },
+    withCredentials: false,
+    maxRedirects: 0
+  });
+  return res.data;
+}
 
 function createQuickBooksClient() {
   const clientId = process.env.QUICKBOOKS_CLIENT_ID;
@@ -41,7 +62,9 @@ export const qbConnect = async (req, reply) => {
       state
     });
 
-    return reply.redirect(authUri);
+    // Return the authorization URL as JSON so the frontend can
+    // perform a top-level navigation (avoids CORS on XHR redirects)
+    return reply.code(200).send({ redirectUrl: authUri });
   } catch (e) {
     req.log.error(e, 'QuickBooks connect error');
     return reply.code(500).send({ error: 'Failed to start QuickBooks OAuth', details: e.message });
@@ -79,7 +102,9 @@ export const qbCallback = async (req, reply) => {
         const userDoc = await db.collection('users').doc(userId).get();
         userData = { ...userDoc.data(), id: userDoc.id };
       }
-    } catch {}
+    } catch (err) {
+      req.log.warn({ err }, 'QuickBooks: failed to fetch optional user/company snapshot');
+    }
 
     const docRef = db.collection('quickbooks_connections').doc(userId);
     await docRef.set({
@@ -97,7 +122,7 @@ export const qbCallback = async (req, reply) => {
       updatedAt: new Date()
     });
 
-    return reply.code(200).send({ status: 'connected', realmId });
+    return reply.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?integration=quickbooks&status=connected&realmId=${realmId}`, 302);
   } catch (e) {
     req.log.error(e, 'QuickBooks callback error');
     return reply.code(500).send({ error: 'Failed to complete QuickBooks OAuth', details: e.message });
@@ -184,11 +209,11 @@ export const getQbAccounts = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Account');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ accounts: json?.QueryResponse?.Account || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ accounts: data?.QueryResponse?.Account || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbAccounts error');
     return reply.code(500).send({ error: 'Failed to fetch accounts', details: e.message });
@@ -200,11 +225,11 @@ export const getQbCustomers = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Customer');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ customers: json?.QueryResponse?.Customer || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ customers: data?.QueryResponse?.Customer || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbCustomers error');
     return reply.code(500).send({ error: 'Failed to fetch customers', details: e.message });
@@ -216,11 +241,11 @@ export const getQbVendors = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Vendor');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ vendors: json?.QueryResponse?.Vendor || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ vendors: data?.QueryResponse?.Vendor || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbVendors error');
     return reply.code(500).send({ error: 'Failed to fetch vendors', details: e.message });
@@ -232,11 +257,11 @@ export const getQbItems = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Item');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ items: json?.QueryResponse?.Item || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ items: data?.QueryResponse?.Item || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbItems error');
     return reply.code(500).send({ error: 'Failed to fetch items', details: e.message });
@@ -248,11 +273,11 @@ export const getQbInvoices = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Invoice');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ invoices: json?.QueryResponse?.Invoice || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ invoices: data?.QueryResponse?.Invoice || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbInvoices error');
     return reply.code(500).send({ error: 'Failed to fetch invoices', details: e.message });
@@ -264,11 +289,11 @@ export const getQbBills = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Bill');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ bills: json?.QueryResponse?.Bill || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ bills: data?.QueryResponse?.Bill || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbBills error');
     return reply.code(500).send({ error: 'Failed to fetch bills', details: e.message });
@@ -280,11 +305,11 @@ export const getQbPayments = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from Payment');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ payments: json?.QueryResponse?.Payment || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ payments: data?.QueryResponse?.Payment || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbPayments error');
     return reply.code(500).send({ error: 'Failed to fetch payments', details: e.message });
@@ -296,11 +321,11 @@ export const getQbJournals = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const url = `${oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com'}/v3/company/${realmId}/query`;
+    const base = getQbBaseUrl(oauthClient.environment);
     const q = encodeURIComponent('select * from JournalEntry');
-    const res = await oauthClient.makeApiCall({ url: `${url}?query=${q}`, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ journals: json?.QueryResponse?.JournalEntry || [] });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/query?query=${q}` });
+    return reply.code(200).send({ journals: data?.QueryResponse?.JournalEntry || [] });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbJournals error');
     return reply.code(500).send({ error: 'Failed to fetch journals', details: e.message });
@@ -313,13 +338,12 @@ export const getQbGeneralLedger = async (req, reply) => {
     const userId = req.user?.id;
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
     const { oauthClient, realmId } = await getQbContext(userId);
-    const base = oauthClient.environment === 'production' ? 'https://quickbooks.api.intuit.com' : 'https://sandbox-quickbooks.api.intuit.com';
+    const base = getQbBaseUrl(oauthClient.environment);
     const from = req.query?.from || '1900-01-01';
     const to = req.query?.to || new Date().toISOString().slice(0, 10);
-    const url = `${base}/v3/company/${realmId}/reports/GeneralLedger?start_date=${encodeURIComponent(from)}&end_date=${encodeURIComponent(to)}`;
-    const res = await oauthClient.makeApiCall({ url, method: 'GET' });
-    const json = res.getJson();
-    return reply.code(200).send({ report: json || {} });
+    const accessToken = await getQuickBooksAccessTokenForUser(userId);
+    const data = await qbAxiosGet({ accessToken, url: `${base}/v3/company/${realmId}/reports/GeneralLedger?start_date=${encodeURIComponent(from)}&end_date=${encodeURIComponent(to)}` });
+    return reply.code(200).send({ report: data || {} });
   } catch (e) {
     req.log.error(e, 'QuickBooks getQbGeneralLedger error');
     return reply.code(500).send({ error: 'Failed to fetch general ledger', details: e.message });
