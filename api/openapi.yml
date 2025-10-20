@@ -13,6 +13,7 @@ tags:
   - name: "Xero"
   - name: "Gusto"
   - name: "Sales Force"
+  - name: "NetSuite"
 
 paths:
   /api/integrations/gusto/connect:
@@ -27,8 +28,16 @@ paths:
           schema:
             type: string
       responses:
-        '302':
-          description: Redirect to Gusto authorization
+        '200':
+          description: Authorization URL payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    format: uri
         '401':
           description: Unauthorized
         '500':
@@ -49,8 +58,8 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Gusto connected
+        '302':
+          description: Redirect back to frontend after successful connection
         '400':
           description: Missing or invalid parameters
         '500':
@@ -167,8 +176,16 @@ paths:
           schema:
             type: string
       responses:
-        '302':
-          description: Redirect to QuickBooks authorization
+        '200':
+          description: Authorization URL payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    format: uri
         '401':
           description: Unauthorized
         '500':
@@ -196,8 +213,8 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: QuickBooks connected
+        '302':
+          description: Redirect back to frontend after successful connection
         '400':
           description: Missing or invalid parameters
         '500':
@@ -365,8 +382,16 @@ paths:
           schema:
             type: string
       responses:
-        '302':
-          description: Redirect to Xero authorization
+        '200':
+          description: Authorization URL payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    format: uri
         '401':
           description: Unauthorized
         '500':
@@ -389,8 +414,8 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Xero connected
+        '302':
+          description: Redirect back to frontend after successful connection
         '400':
           description: Missing or invalid parameters
         '500':
@@ -540,8 +565,16 @@ paths:
           schema:
             type: string
       responses:
-        '302':
-          description: Redirect to Salesforce authorization
+        '200':
+          description: Authorization URL payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    format: uri
         '401':
           description: Unauthorized
         '500':
@@ -562,12 +595,286 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Salesforce connected
+        '302':
+          description: Redirect back to frontend after successful connection
         '400':
           description: Missing or invalid parameters
         '500':
           description: Failed to complete Salesforce OAuth
+
+  # NetSuite
+  /api/integrations/netsuite/connect:
+    get:
+      summary: Start NetSuite OAuth 2.0 flow
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authorization URL payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  redirectUrl:
+                    type: string
+                    format: uri
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to start NetSuite OAuth
+
+  /api/integrations/netsuite/callback:
+    get:
+      summary: NetSuite OAuth callback
+      tags:
+        - NetSuite
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect back to frontend after successful connection
+        '400':
+          description: Missing or invalid parameters
+        '500':
+          description: Failed to complete NetSuite OAuth
+
+  /api/integrations/netsuite/accounts:
+    get:
+      summary: List NetSuite accounts (Chart of Accounts)
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Accounts
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite accounts
+
+  /api/integrations/netsuite/journals:
+    get:
+      summary: List NetSuite journals
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Journals
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite journals
+
+  /api/integrations/netsuite/invoices:
+    get:
+      summary: List NetSuite invoices
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Invoices
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite invoices
+
+  /api/integrations/netsuite/bills:
+    get:
+      summary: List NetSuite bills
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Bills
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite bills
+
+  /api/integrations/netsuite/payments:
+    get:
+      summary: List NetSuite payments
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [all, customer, vendor]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Payments
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite payments
+
+  /api/integrations/netsuite/customers:
+    get:
+      summary: List NetSuite customers
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Customers
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite customers
+
+  /api/integrations/netsuite/vendors:
+    get:
+      summary: List NetSuite vendors
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Vendors
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite vendors
+
+  /api/integrations/netsuite/items:
+    get:
+      summary: List NetSuite items
+      tags:
+        - NetSuite
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: types
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Comma-separated item types (e.g. inventoryItem,serviceSaleItem)
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Items
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch NetSuite items
 
   /api/integrations/salesforce/customers:
     get:

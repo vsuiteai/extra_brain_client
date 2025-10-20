@@ -42,7 +42,7 @@ export const gustoConnect = async (req, reply) => {
     authorizeUrl.searchParams.set('scope', GUSTO_SCOPES);
     authorizeUrl.searchParams.set('state', state);
 
-    return reply.redirect(authorizeUrl.toString());
+    return reply.code(200).send({ redirectUrl: authorizeUrl.toString() });
   } catch (e) {
     req.log.error(e, 'Gusto connect error');
     return reply.code(500).send({ error: 'Failed to start Gusto OAuth', details: e.message });
@@ -71,7 +71,9 @@ export const gustoCallback = async (req, reply) => {
         const userDoc = await db.collection('users').doc(userId).get();
         userData = { ...userDoc.data(), id: userDoc.id };
       }
-    } catch {}
+    } catch (e) {
+      req.log.error(e, 'Gusto callback error');
+    }
 
     const tokenUrl = new URL('/oauth/token', GUSTO_AUTH_BASE).toString();
     const basic = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
@@ -112,7 +114,7 @@ export const gustoCallback = async (req, reply) => {
       updatedAt: new Date()
     });
 
-    return reply.code(200).send({ status: 'connected' });
+    return reply.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?integration=gusto&status=connected`, 302);
   } catch (e) {
     req.log.error(e, 'Gusto callback error');
     return reply.code(500).send({ error: 'Failed to complete Gusto OAuth', details: e.message });

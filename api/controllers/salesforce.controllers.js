@@ -20,9 +20,9 @@ function getRedirectUri() {
 }
 
 function ensureClientCreds() {
-  const clientId = process.env.SALESFORCE_CLIENT_ID;
-  const clientSecret = process.env.SALESFORCE_CLIENT_SECRET;
-  if (!clientId || !clientSecret) throw new Error('Missing Salesforce env vars (SALESFORCE_CLIENT_ID, SALESFORCE_CLIENT_SECRET)');
+  const clientId = process.env.SALESFORCE_CONSUMER_KEY;
+  const clientSecret = process.env.SALESFORCE_CONSUMER_SECRET;
+  if (!clientId || !clientSecret) throw new Error('Missing Salesforce env vars (SALESFORCE_CONSUMER_KEY, SALESFORCE_CONSUMER_SECRET)');
   return { clientId, clientSecret };
 }
 
@@ -45,7 +45,7 @@ export const salesforceConnect = async (req, reply) => {
     authorizeUrl.searchParams.set('scope', scopes);
     authorizeUrl.searchParams.set('state', state);
 
-    return reply.redirect(authorizeUrl.toString());
+    return reply.code(200).send({ redirectUrl: authorizeUrl.toString() });
   } catch (e) {
     req.log.error(e, 'Salesforce connect error');
     return reply.code(500).send({ error: 'Failed to start Salesforce OAuth', details: e.message });
@@ -74,7 +74,9 @@ export const salesforceCallback = async (req, reply) => {
         const userDoc = await db.collection('users').doc(userId).get();
         userData = { ...userDoc.data(), id: userDoc.id };
       }
-    } catch {}
+    } catch(e) {
+      console.log(e)
+    }
 
     const params = new URLSearchParams();
     params.set('grant_type', 'authorization_code');
@@ -117,7 +119,7 @@ export const salesforceCallback = async (req, reply) => {
       updatedAt: new Date()
     });
 
-    return reply.code(200).send({ status: 'connected', instanceUrl: instanceUrl || null });
+    return reply.redirect(`${process.env.FRONTEND_URL}/dashboard/settings?integration=salesforce&status=connected&instanceUrl=${instanceUrl}`, 302);
   } catch (e) {
     req.log.error(e, 'Salesforce callback error');
     return reply.code(500).send({ error: 'Failed to complete Salesforce OAuth', details: e.message });
@@ -200,14 +202,14 @@ async function listSObjects({ accessToken, instanceUrl }) {
   return names;
 }
 
-async function objectExists({ accessToken, instanceUrl }, objectName) {
-  try {
-    const names = await listSObjects({ accessToken, instanceUrl });
-    return names.has(objectName);
-  } catch {
-    return false;
-  }
-}
+// async function objectExists({ accessToken, instanceUrl }, objectName) {
+//   try {
+//     const names = await listSObjects({ accessToken, instanceUrl });
+//     return names.has(objectName);
+//   } catch {
+//     return false;
+//   }
+// }
 
 async function chooseFirstExistingObject(ctx, candidates) {
   const names = await listSObjects(ctx);
