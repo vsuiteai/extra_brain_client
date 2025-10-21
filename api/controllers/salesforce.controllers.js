@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { db } from '../firestore.js';
 
 function getSalesforceAuthorizeUrl() {
@@ -26,6 +27,18 @@ function ensureClientCreds() {
   return { clientId, clientSecret };
 }
 
+function b64url(buf) {
+  return Buffer.from(buf).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function generateCodeVerifier() {
+  return b64url(crypto.randomBytes(32));
+}
+
+function codeChallengeFromVerifier(verifier) {
+  return b64url(crypto.createHash('sha256').update(verifier).digest());
+}
+
 export const salesforceConnect = async (req, reply) => {
   const userId = req.user?.id;
   const companyId = req.query?.companyId;
@@ -34,16 +47,21 @@ export const salesforceConnect = async (req, reply) => {
 
     const { clientId } = ensureClientCreds();
     const redirectUri = getRedirectUri();
-    const state = await req.server.jwt.sign({ userId, companyId }, { expiresIn: '10m' });
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = codeChallengeFromVerifier(codeVerifier);
+    const state = await req.server.jwt.sign({ userId, companyId, codeVerifier }, { expiresIn: '10m' });
 
     const authorizeUrl = new URL(getSalesforceAuthorizeUrl());
     authorizeUrl.searchParams.set('response_type', 'code');
     authorizeUrl.searchParams.set('client_id', clientId);
     authorizeUrl.searchParams.set('redirect_uri', redirectUri);
-    // Scope examples: api, refresh_token, offline_access, full, id, web
-    const scopes = (process.env.SALESFORCE_SCOPES || ['api', 'refresh_token', 'offline_access', 'openid', 'id'].join(' '));
+    // Scope examples: full, api, refresh_token, offline_access, id, openid, web
+    // Default to 'full' to match Connected App configured with only Full access
+    const scopes = process.env.SALESFORCE_SCOPES || 'full';
     authorizeUrl.searchParams.set('scope', scopes);
     authorizeUrl.searchParams.set('state', state);
+    authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+    authorizeUrl.searchParams.set('code_challenge_method', 'S256');
 
     return reply.code(200).send({ redirectUrl: authorizeUrl.toString() });
   } catch (e) {
@@ -57,8 +75,9 @@ export const salesforceCallback = async (req, reply) => {
   if (!code || !state) return reply.code(400).send({ error: 'Missing code/state' });
   try {
     const decoded = await req.server.jwt.verify(state);
-    const { userId, companyId } = decoded || {};
+    const { userId, companyId, codeVerifier } = decoded || {};
     if (!userId) return reply.code(400).send({ error: 'Invalid state' });
+    if (!codeVerifier) return reply.code(400).send({ error: 'Missing PKCE verifier in state' });
 
     const { clientId, clientSecret } = ensureClientCreds();
     const redirectUri = getRedirectUri();
@@ -84,6 +103,7 @@ export const salesforceCallback = async (req, reply) => {
     params.set('client_id', clientId);
     params.set('client_secret', clientSecret);
     params.set('redirect_uri', redirectUri);
+    params.set('code_verifier', codeVerifier);
 
     const tokenRes = await axios.post(getSalesforceTokenUrl(), params.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
