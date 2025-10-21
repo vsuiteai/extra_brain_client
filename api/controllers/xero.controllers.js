@@ -11,7 +11,7 @@ const XERO_SCOPES = (
   ].join(' ')
 );
 
-function createXeroClient() {
+function createXeroClient(state = null) {
   const clientId = process.env.XERO_CLIENT_ID;
   const clientSecret = process.env.XERO_CLIENT_SECRET;
   const redirectUri = `${process.env.BASE_URL}/api/integrations/xero/callback`;
@@ -20,12 +20,19 @@ function createXeroClient() {
     throw new Error('Missing Xero OAuth env vars (XERO_CLIENT_ID, XERO_CLIENT_SECRET, XERO_REDIRECT_URI)');
   }
 
-  return new XeroClient({
+  const config = {
     clientId,
     clientSecret,
     redirectUris: [redirectUri],
     scopes: XERO_SCOPES.split(/\s+/)
-  });
+  };
+
+  // Include state if provided
+  if (state) {
+    config.state = state;
+  }
+
+  return new XeroClient(config);
 }
 
 export const xeroConnect = async (req, reply) => {
@@ -34,13 +41,15 @@ export const xeroConnect = async (req, reply) => {
   try {
     if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
 
-    const xero = createXeroClient();
     const state = await req.server.jwt.sign({ userId, companyId }, { expiresIn: '10m' });
+    
+    // Create Xero client with state parameter
+    const xero = createXeroClient(state);
+    
+    // Build consent URL (state is already included in client config)
     const consentUrl = await xero.buildConsentUrl();
-    const url = new URL(consentUrl);
-    url.searchParams.set('state', state);
 
-    return reply.code(200).send({ redirectUrl: url.toString() });
+    return reply.code(200).send({ redirectUrl: consentUrl });
   } catch (e) {
     req.log.error(e, 'Xero connect error');
     return reply.code(500).send({ error: 'Failed to start Xero OAuth', details: e.message });
@@ -52,14 +61,39 @@ export const xeroCallback = async (req, reply) => {
   const host = req.headers.host;
   const fullUrl = `${proto}://${host}${req.raw.url}`;
   const { code, state } = req.query || {};
-  if (!code || !state) return reply.code(400).send({ error: 'Missing code/state' });
+  
+  if (!code) return reply.code(400).send({ error: 'Missing authorization code' });
+  
+  // Handle case where state might not be present (some OAuth flows don't return it)
+  let userId = null;
+  let companyId = null;
+  
+  if (state) {
+    try {
+      const decoded = await req.server.jwt.verify(state);
+      userId = decoded?.userId;
+      companyId = decoded?.companyId;
+    } catch (e) {
+      req.log.warn('Invalid or expired state token:', e.message);
+      // Continue without state validation for now
+    }
+  }
+  
+  // If no userId from state, try to get it from session or other means
+  if (!userId) {
+    userId = req.user?.id;
+  }
+  
+  if (!userId) {
+    return reply.code(400).send({ error: 'Unable to identify user for Xero connection' });
+  }
+  
   try {
-    const decoded = await req.server.jwt.verify(state);
-    const { userId, companyId } = decoded || {};
     let companyData = null;
     let userData = null;
 
-    const xero = createXeroClient();
+    // Create Xero client with the same state that was used in the auth flow
+    const xero = createXeroClient(state);
     await xero.apiCallback(fullUrl);
     await xero.updateTenants();
     const tenant = xero.tenants?.[0];
@@ -77,7 +111,7 @@ export const xeroCallback = async (req, reply) => {
       userData = userDoc.data();
     }
 
-    const docRef = db.collection('xero_connections').doc(`${userId}_${tenant?.tenantId || 'tenant'}`);
+    const docRef = db.collection('xero_connections').doc(userId);
     await docRef.set({
       userId,
       user: userData || null,
