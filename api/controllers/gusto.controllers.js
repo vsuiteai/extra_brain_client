@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { db } from '../firestore.js';
 
-const GUSTO_AUTH_BASE = process.env.GUSTO_AUTH_BASE || 'https://api.gusto.com';
-const GUSTO_API_BASE = process.env.GUSTO_API_BASE || 'https://api.gusto.com';
+const GUSTO_AUTH_BASE = process.env.GUSTO_AUTH_BASE || 'https://api.gusto-demo.com';
+const GUSTO_API_BASE = process.env.GUSTO_API_BASE || 'https://api.gusto-demo.com';
 const GUSTO_SCOPES = (
   process.env.GUSTO_SCOPES || [
     'user.read',
