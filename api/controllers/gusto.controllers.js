@@ -42,6 +42,8 @@ export const gustoConnect = async (req, reply) => {
     authorizeUrl.searchParams.set('scope', GUSTO_SCOPES);
     authorizeUrl.searchParams.set('state', state);
 
+    console.log(authorizeUrl.toString());
+
     return reply.code(200).send({ redirectUrl: authorizeUrl.toString() });
   } catch (e) {
     req.log.error(e, 'Gusto connect error');
