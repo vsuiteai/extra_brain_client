@@ -1,9 +1,10 @@
 import fp from 'fastify-plugin';
-import { salesforceConnect, salesforceCallback, getSfCustomers, getSfVendors, getSfItems, getSfInvoices, getSfBills, getSfPayments, getSfChartOfAccounts, getSfGeneralLedger } from '../controllers/salesforce.controllers.js';
+import { salesforceConnect, salesforceCallback, getSfCustomers, getSfVendors, getSfItems, getSfInvoices, getSfBills, getSfPayments, getSfChartOfAccounts, getSfGeneralLedger, getSfConnectionStatus } from '../controllers/salesforce.controllers.js';
 
 export default fp(async (fastify) => {
   fastify.get('/api/integrations/salesforce/connect', { preHandler: [fastify.authenticate] }, salesforceConnect);
   fastify.get('/api/integrations/salesforce/callback', salesforceCallback);
+  fastify.get('/api/integrations/salesforce/status', { preHandler: [fastify.authenticate] }, getSfConnectionStatus);
   fastify.get('/api/integrations/salesforce/customers', { preHandler: [fastify.authenticate] }, getSfCustomers);
   fastify.get('/api/integrations/salesforce/vendors', { preHandler: [fastify.authenticate] }, getSfVendors);
   fastify.get('/api/integrations/salesforce/items', { preHandler: [fastify.authenticate] }, getSfItems);

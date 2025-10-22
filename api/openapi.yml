@@ -162,6 +162,44 @@ paths:
         '500':
           description: Failed to fetch Gusto locations
 
+  /api/integrations/gusto/status:
+    get:
+      summary: Check Gusto connection status for current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connection status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connected:
+                    type: boolean
+                    description: Whether user has an active Gusto connection
+                  status:
+                    type: string
+                    enum: [active, expired, not_connected]
+                    description: Current connection status
+                  expiresAt:
+                    type: integer
+                    description: Token expiration timestamp (if connected)
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: When the connection was created (if connected)
+                  companyId:
+                    type: string
+                    description: Associated company ID (if any)
+                  company:
+                    type: object
+                    description: Company data snapshot (if any)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to check Gusto connection status
+
   /api/integrations/quickbooks/connect:
     get:
       summary: Start QuickBooks OAuth 2.0 flow
@@ -368,6 +406,49 @@ paths:
         '500':
           description: Failed to fetch QuickBooks general ledger
 
+  /api/integrations/quickbooks/status:
+    get:
+      summary: Check QuickBooks connection status for current user
+      tags:
+        - Intuit – Quickbooks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connection status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connected:
+                    type: boolean
+                    description: Whether user has an active QuickBooks connection
+                  status:
+                    type: string
+                    enum: [active, expired, not_connected]
+                    description: Current connection status
+                  expiresAt:
+                    type: integer
+                    description: Token expiration timestamp (if connected)
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: When the connection was created (if connected)
+                  realmId:
+                    type: string
+                    description: QuickBooks company realm ID (if connected)
+                  companyId:
+                    type: string
+                    description: Associated company ID (if any)
+                  company:
+                    type: object
+                    description: Company data snapshot (if any)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to check QuickBooks connection status
+
   /api/integrations/xero/connect:
     get:
       summary: Start Xero OAuth 2.0 flow
@@ -552,6 +633,52 @@ paths:
           description: Unauthorized
         '500':
           description: Failed to fetch Xero journals
+
+  /api/integrations/xero/status:
+    get:
+      summary: Check Xero connection status for current user
+      tags:
+        - Xero
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connection status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connected:
+                    type: boolean
+                    description: Whether user has an active Xero connection
+                  status:
+                    type: string
+                    enum: [active, expired, not_connected]
+                    description: Current connection status
+                  expiresAt:
+                    type: integer
+                    description: Token expiration timestamp (if connected)
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: When the connection was created (if connected)
+                  tenantId:
+                    type: string
+                    description: Xero tenant ID (if connected)
+                  tenantName:
+                    type: string
+                    description: Xero tenant name (if connected)
+                  companyId:
+                    type: string
+                    description: Associated company ID (if any)
+                  company:
+                    type: object
+                    description: Company data snapshot (if any)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to check Xero connection status
 
   /api/integrations/salesforce/connect:
     get:
@@ -1062,6 +1189,47 @@ paths:
           description: Unauthorized
         '500':
           description: Failed to fetch Salesforce general ledger
+
+  /api/integrations/salesforce/status:
+    get:
+      summary: Check Salesforce connection status for current user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Connection status information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  connected:
+                    type: boolean
+                    description: Whether user has an active Salesforce connection
+                  status:
+                    type: string
+                    enum: [active, expired, not_connected]
+                    description: Current connection status
+                  expiresAt:
+                    type: integer
+                    description: Token expiration timestamp (if connected)
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: When the connection was created (if connected)
+                  instanceUrl:
+                    type: string
+                    description: Salesforce instance URL (if connected)
+                  companyId:
+                    type: string
+                    description: Associated company ID (if any)
+                  company:
+                    type: object
+                    description: Company data snapshot (if any)
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to check Salesforce connection status
 
   /api/integrations/gusto/disconnect:
     post:

@@ -264,4 +264,32 @@ export const getGustoLocations = async (req, reply) => {
   }
 };
 
+export const getGustoConnectionStatus = async (req, reply) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return reply.code(401).send({ error: 'Unauthorized' });
+    
+    const snap = await db.collection('gusto_connections').where('userId', '==', userId).limit(1).get();
+    
+    if (snap.empty) {
+      return reply.code(200).send({ connected: false, status: 'not_connected' });
+    }
+    
+    const data = snap.docs[0].data();
+    const isExpired = Date.now() >= data.expiresAt;
+    
+    return reply.code(200).send({
+      connected: true,
+      status: isExpired ? 'expired' : 'active',
+      expiresAt: data.expiresAt,
+      createdAt: data.createdAt,
+      companyId: data.companyId,
+      company: data.company
+    });
+  } catch (e) {
+    req.log.error(e, 'Gusto getGustoConnectionStatus error');
+    return reply.code(500).send({ error: 'Failed to check Gusto connection status', details: e.message });
+  }
+};
+
 

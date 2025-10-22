@@ -1,9 +1,10 @@
 import fp from 'fastify-plugin';
-import { qbConnect, qbCallback, getQbAccounts, getQbCustomers, getQbVendors, getQbItems, getQbInvoices, getQbBills, getQbPayments, getQbJournals, getQbGeneralLedger } from '../controllers/quickbooks.controllers.js';
+import { qbConnect, qbCallback, getQbAccounts, getQbCustomers, getQbVendors, getQbItems, getQbInvoices, getQbBills, getQbPayments, getQbJournals, getQbGeneralLedger, getQbConnectionStatus } from '../controllers/quickbooks.controllers.js';
 
 export default fp(async (fastify) => {
   fastify.get('/api/integrations/quickbooks/connect', { preHandler: [fastify.authenticate] }, qbConnect);
   fastify.get('/api/integrations/quickbooks/callback', qbCallback);
+  fastify.get('/api/integrations/quickbooks/status', { preHandler: [fastify.authenticate] }, getQbConnectionStatus);
   fastify.get('/api/integrations/quickbooks/accounts', { preHandler: [fastify.authenticate] }, getQbAccounts);
   fastify.get('/api/integrations/quickbooks/customers', { preHandler: [fastify.authenticate] }, getQbCustomers);
   fastify.get('/api/integrations/quickbooks/vendors', { preHandler: [fastify.authenticate] }, getQbVendors);
