@@ -55,7 +55,8 @@ export const salesforceConnect = async (req, reply) => {
     authorizeUrl.searchParams.set('response_type', 'code');
     authorizeUrl.searchParams.set('client_id', clientId);
     authorizeUrl.searchParams.set('redirect_uri', redirectUri);
-    const scopes = process.env.SALESFORCE_SCOPES || 'api,refresh_token,offline_access';
+    const rawScopes = process.env.SALESFORCE_SCOPES || 'api refresh_token';
+    const scopes = rawScopes.split(/[\s,]+/).filter(Boolean).join(' ');
     authorizeUrl.searchParams.set('scope', scopes);
     authorizeUrl.searchParams.set('state', state);
     authorizeUrl.searchParams.set('code_challenge', codeChallenge);
