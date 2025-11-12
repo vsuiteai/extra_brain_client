@@ -20,6 +20,8 @@ import netsuiteRoutes from './routes/netsuite.routes.js';
 import quickbooksRoutes from './routes/quickbooks.routes.js';
 import gustoRoutes from './routes/gusto.routes.js';
 import salesforceRoutes from './routes/salesforce.routes.js';
+import uploadsRoutes from './routes/uploads.routes.js';
+import financialRoutes from './routes/financial.routes.js';
 
 const app = Fastify({ logger: true });
 await app.register(cors, {
@@ -131,6 +133,8 @@ await app.register(netsuiteRoutes);
 await app.register(quickbooksRoutes);
 await app.register(gustoRoutes);
 await app.register(salesforceRoutes);
+await app.register(uploadsRoutes);
+await app.register(financialRoutes);
 
 const port = process.env.PORT || 8080;
 app.listen({ port, host: '0.0.0.0' });
