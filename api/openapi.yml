@@ -14,6 +14,8 @@ tags:
   - name: "Gusto"
   - name: "Sales Force"
   - name: "NetSuite"
+  - name: "Uploads"
+  - name: "Financial"
 
 paths:
   /api/integrations/gusto/connect:
@@ -1243,6 +1245,340 @@ paths:
           description: Unauthorized
         '500':
           description: Failed to disconnect
+
+  /api/uploads/financial/analyze:
+    post:
+      summary: Analyze uploaded financial file and suggest column mapping
+      tags:
+        - Uploads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Excel or CSV file
+      responses:
+        '200':
+          description: File analyzed with suggested mapping
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadId:
+                    type: string
+                  columns:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                        name:
+                          type: string
+                        sample:
+                          type: array
+                          items:
+                            type: string
+                  suggestedMapping:
+                    type: object
+                    properties:
+                      month:
+                        type: integer
+                      revenue:
+                        type: integer
+                      cogs:
+                        type: integer
+                      opex:
+                        type: integer
+                      ebitda:
+                        type: integer
+                      cash:
+                        type: integer
+                      ar:
+                        type: integer
+                      ap:
+                        type: integer
+                      inventory:
+                        type: integer
+                  requiredFields:
+                    type: array
+                    items:
+                      type: string
+                  optionsDefaults:
+                    type: object
+                    properties:
+                      headerRow:
+                        type: integer
+                      dataStartRow:
+                        type: integer
+                      dateFormat:
+                        type: string
+        '400':
+          description: No file uploaded or invalid tenantId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to analyze file
+
+  /api/uploads/financial/commit:
+    post:
+      summary: Commit column mapping and start processing upload
+      tags:
+        - Uploads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - uploadId
+                - mapping
+              properties:
+                uploadId:
+                  type: string
+                mapping:
+                  type: object
+                  required:
+                    - month
+                    - revenue
+                  properties:
+                    month:
+                      type: integer
+                    revenue:
+                      type: integer
+                    cogs:
+                      type: integer
+                      nullable: true
+                    opex:
+                      type: integer
+                      nullable: true
+                    ebitda:
+                      type: integer
+                      nullable: true
+                    cash:
+                      type: integer
+                      nullable: true
+                    ar:
+                      type: integer
+                      nullable: true
+                    ap:
+                      type: integer
+                      nullable: true
+                    inventory:
+                      type: integer
+                      nullable: true
+                options:
+                  type: object
+                  properties:
+                    headerRow:
+                      type: integer
+                    dataStartRow:
+                      type: integer
+                    dateFormat:
+                      type: string
+      responses:
+        '200':
+          description: Upload queued for processing
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploadId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued]
+        '400':
+          description: Invalid request or missing required fields
+        '401':
+          description: Unauthorized
+        '404':
+          description: Upload not found
+        '500':
+          description: Failed to commit upload
+
+  /api/uploads/{uploadId}:
+    get:
+      summary: Get upload status
+      tags:
+        - Uploads
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: uploadId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Upload status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                  status:
+                    type: string
+                    enum: [pending, processing, succeeded, failed]
+                  rowCount:
+                    type: integer
+                    nullable: true
+                  errorMessage:
+                    type: string
+                    nullable: true
+                  processedAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: Upload not found
+        '500':
+          description: Failed to get upload status
+
+  /api/financial/summary:
+    get:
+      summary: Get financial snapshot data
+      tags:
+        - Financial
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: startMonth
+          in: query
+          required: false
+          schema:
+            type: string
+            description: Start month in YYYY-MM format
+        - name: endMonth
+          in: query
+          required: false
+          schema:
+            type: string
+            description: End month in YYYY-MM format
+      responses:
+        '200':
+          description: Financial snapshot data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        month:
+                          type: string
+                        revenue:
+                          type: number
+                        cogs:
+                          type: number
+                        opex:
+                          type: number
+                        ebitda:
+                          type: number
+                        cash:
+                          type: number
+                          nullable: true
+                        arDays:
+                          type: number
+                          nullable: true
+                        apDays:
+                          type: number
+                          nullable: true
+                        inventoryDays:
+                          type: number
+                          nullable: true
+                        source:
+                          type: string
+        '400':
+          description: Invalid tenantId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch financial data
+
+  /api/financial/source:
+    get:
+      summary: Get current financial data source information
+      tags:
+        - Financial
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: companyId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Financial data source info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentSource:
+                    type: string
+                    nullable: true
+                    description: Current data source (upload, quickbooks, xero, etc.)
+                  lastUploadAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+                  lastIntegrationSyncAt:
+                    type: string
+                    format: date-time
+                    nullable: true
+        '400':
+          description: Invalid tenantId
+        '401':
+          description: Unauthorized
+        '500':
+          description: Failed to fetch source info
   /api/auth/login:
     post:
       summary: User login
