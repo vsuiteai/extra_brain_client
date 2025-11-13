@@ -54,7 +54,7 @@ const login = async (req, reply) => {
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) return reply.code(401).send({ error: 'Invalid email or password' });
 
-  const userToTokenize = { id: userId, email, fullName: user.fullName };
+  const userToTokenize = { id: userId, email, fullName: user.fullName, companyId: user.companyId };
 
   const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
@@ -101,31 +101,38 @@ const signUp = async (req, reply) => {
     return reply.code(400).send({ error: 'Email already in use'})
   }
 
-  if (userDoc.empty) {
-    // get role from roles collection
-    const roleDoc = await firestore.collection('roles')
-      .where('name', '==', 'Client')
-      .limit(1)
-      .get();
-    if (roleDoc.empty) {
-      return reply.code(500).send({ error: 'Default role not found'})
-    }
-    const roleData = roleDoc.docs[0].data();
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
-      email,
-      password: hashedPassword,
-      companyName,
-      fullName,
-      roleName: roleData.name,
-      role: roleData,
-      createdAt: new Date().toISOString(),
-    }
-
-    await firestore.collection('users').add(newUser);
-
-    return { ok: true, message: 'User created successfully' };
+  const roleDoc = await firestore.collection('roles')
+    .where('name', '==', 'Client')
+    .limit(1)
+    .get();
+  if (roleDoc.empty) {
+    return reply.code(500).send({ error: 'Default role not found'})
   }
+
+  const companyRef = await firestore.collection('companies').add({
+    CompanyName: companyName,
+    createdAt: new Date().toISOString()
+  });
+
+  const roleData = roleDoc.docs[0].data();
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const newUser = {
+    email,
+    password: hashedPassword,
+    companyName,
+    companyId: companyRef.id,
+    fullName,
+    roleName: roleData.name,
+    role: roleData,
+    createdAt: new Date().toISOString(),
+  }
+
+  const newUserDoc = await firestore.collection('users').add(newUser);
+
+  const userToTokenize = { id: newUserDoc.id, email, fullName, companyId: companyRef.id };
+  const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
+
+  return { ok: true, message: 'User created successfully', accessToken, refreshToken };
 }
 
 const refreshTokens = (app) => async (req, reply) => {
@@ -143,7 +150,7 @@ const refreshTokens = (app) => async (req, reply) => {
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
 
-    const userToTokenize = { id: userId, email: user.email, fullName: user.fullName };
+    const userToTokenize = { id: userId, email: user.email, fullName: user.fullName, companyId: user.companyId };
 
     const { accessToken, refreshToken: newRefreshToken } = app.generateTokens(userToTokenize);
 
@@ -239,7 +246,7 @@ const googleAuth = async (req, reply) => {
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    const userToTokenize = { id: newUserDoc.id, email, fullName: name };
+    const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: newUser.companyId };
 
     const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
@@ -268,7 +275,7 @@ const googleAuth = async (req, reply) => {
     const user = userDoc.docs[0].data();
     const userId = userDoc.docs[0].id;
 
-    const userToTokenize = { id: userId, email, fullName: user.fullName };
+    const userToTokenize = { id: userId, email, fullName: user.fullName, companyId: user.companyId };
 
     const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
 
@@ -337,7 +344,7 @@ const microsoftAuth = async (req, reply) => {
 
       const newUserDoc = await firestore.collection('users').add(newUser);
 
-      const userToTokenize = { id: newUserDoc.id, email, fullName: name };
+      const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: newUser.companyId };
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
 
@@ -350,7 +357,7 @@ const microsoftAuth = async (req, reply) => {
         return reply.code(400).send({ error: 'Microsoft ID does not match' });
       }
 
-      const userToTokenize = { id: userId, email, fullName: user.fullName };
+      const userToTokenize = { id: userId, email, fullName: user.fullName, companyId: user.companyId };
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
 
@@ -544,7 +551,7 @@ const me = async (req, reply) => {
     // Don't return password
     // eslint-disable-next-line no-unused-vars
     const { password, ...userInfo } = user;
-    return { id: userId, ...userInfo };
+    return { id: userId, ...userInfo, companyId: user.companyId };
   } catch (err) {
     console.log(err.message);
     return reply.code(401).send({ error: 'Invalid or expired token' });
