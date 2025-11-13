@@ -1582,6 +1582,7 @@ paths:
   /api/auth/login:
     post:
       summary: User login
+      description: Authenticates with email/password. On success returns access/refresh tokens and sets HttpOnly cookies (access_token, refresh_token).
       requestBody:
         required: true
         content:
@@ -1595,7 +1596,7 @@ paths:
                   type: string
       responses:
         '200':
-          description: Successful login
+          description: Successful login; tokens returned and cookies set
         '401':
           description: Invalid credentials
 
@@ -1628,6 +1629,7 @@ paths:
   /api/auth/refresh-token:
     post:
       summary: Refresh JWT tokens
+      description: Exchanges a valid refresh token for new access/refresh tokens.
       requestBody:
         required: true
         content:
@@ -1643,23 +1645,25 @@ paths:
         '401':
           description: Invalid refresh token
 
+  /api/auth/google-login:
+    get:
+      summary: Start Google OAuth 2.0 flow
+      description: Redirects the user to Google to begin OAuth; no request body.
+      responses:
+        '302':
+          description: Redirect to Google OAuth consent screen
+        '400':
+          description: Invalid request
+
   /api/auth/google:
     get:
       summary: Google OAuth callback
+      description: Handles Google OAuth callback, sets HttpOnly cookies, and redirects to the frontend.
       responses:
-        '200':
-          description: Google OAuth callback handled
+        '302':
+          description: Redirect back to frontend after successful login
         '400':
           description: Invalid callback
-
-  /api/auth/google-login:
-    get:
-      summary: Google OAuth login page
-      responses:
-        '200':
-          description: Google login page
-        '400':
-          description: Invalid request
   /api/auth/me:
     get:
       summary: Get current authenticated user profile
@@ -1672,6 +1676,16 @@ paths:
           description: Unauthorized
         '404':
           description: User not found
+
+  /api/auth/logout:
+    post:
+      summary: Logout
+      description: Clears authentication cookies (access_token, refresh_token).
+      responses:
+        '200':
+          description: Logged out successfully; cookies cleared
+        '500':
+          description: Logout failed
   /api/auth/microsoft:
     post:
       summary: Microsoft OAuth login
