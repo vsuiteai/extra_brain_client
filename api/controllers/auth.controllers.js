@@ -114,6 +114,10 @@ const signUp = async (req, reply) => {
     createdAt: new Date().toISOString()
   });
 
+  await firestore.collection('companies').doc(companyRef.id).update({
+    CompanyID: companyRef.id
+  });
+
   const roleData = roleDoc.docs[0].data();
   const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = {

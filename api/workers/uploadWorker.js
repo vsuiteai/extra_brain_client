@@ -72,6 +72,27 @@ export async function processUpload(uploadId, mapping, options) {
       count++;
     }
 
+    // Calculate aggregated financials
+    const latestMonth = rows.map(row => normalizeMonth(row[mapping.month], options.dateFormat)).filter(Boolean).sort().pop();
+    const latestRow = rows.find(row => normalizeMonth(row[mapping.month], options.dateFormat) === latestMonth);
+    
+    if (latestRow) {
+      const revenue = toNumber(latestRow[mapping.revenue]);
+      const cogs = mapping.cogs != null ? toNumber(latestRow[mapping.cogs]) : 0;
+      const opex = mapping.opex != null ? toNumber(latestRow[mapping.opex]) : 0;
+      const ebitda = mapping.ebitda != null ? toNumber(latestRow[mapping.ebitda]) : revenue - cogs - opex;
+      
+      await db.collection('companies').doc(upload.tenantId).set({
+        Financials: {
+          Revenue: revenue,
+          COGS: cogs,
+          OPEX: opex,
+          EBITDA: ebitda
+        },
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+    }
+
     await db.collection('uploads').doc(uploadId).update({
       status: 'succeeded',
       processedAt: new Date(),
