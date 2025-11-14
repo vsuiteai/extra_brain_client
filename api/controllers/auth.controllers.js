@@ -166,17 +166,28 @@ const refreshTokens = (app) => async (req, reply) => {
 }
 
 const googleLogin = async (req, reply) => {
-  const state = req.query.state || '';
+  const { state = '', companyName = '' } = req.query;
+  const stateData = JSON.stringify({ state, companyName });
   const redirectUrl = `${process.env.BASE_URL}/api/auth/google`;
   const clientId = process.env.GOOGLE_CLIENT_ID;
-  const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${state}`;
+  const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${encodeURIComponent(stateData)}`;
 
   return reply.redirect(googleAuthUrl, 302);
 }
 
 const googleAuth = async (req, reply) => {
-  const { code, state } = req.query;
+  const { code, state: stateParam } = req.query;
   if (!code) return reply.code(400).send({ error: 'code is required' });
+
+  let state = '';
+  let companyName = '';
+  try {
+    const parsed = JSON.parse(decodeURIComponent(stateParam || '{}'));
+    state = parsed.state || '';
+    companyName = parsed.companyName || '';
+  } catch {
+    state = stateParam || '';
+  }
 
   const googleClientId = process.env.GOOGLE_CLIENT_ID;
   const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -232,6 +243,10 @@ const googleAuth = async (req, reply) => {
   
   if (userDoc.empty) {
     // New user, create account
+    if (!companyName) {
+      return reply.redirect(`${process.env.FRONTEND_URL}/signup?error=company_name_required&email=${encodeURIComponent(email)}`, 302);
+    }
+
     const roleDoc = await firestore.collection('roles')
       .where('name', '==', 'Client')
       .limit(1)
@@ -239,18 +254,30 @@ const googleAuth = async (req, reply) => {
     if (roleDoc.empty) {
       return reply.code(500).send({ error: 'Default role not found' });
     }
+
+    const companyRef = await firestore.collection('companies').add({
+      CompanyName: companyName,
+      createdAt: new Date().toISOString()
+    });
+
+    await firestore.collection('companies').doc(companyRef.id).update({
+      CompanyID: companyRef.id
+    });
+
     const roleData = roleDoc.docs[0].data();
     const newUser = {
       email,
       fullName: name,
       avatar: picture,
+      companyName,
+      companyId: companyRef.id,
       roleName: roleData.name,
       role: roleData,
       createdAt: new Date().toISOString(),
     }
     const newUserDoc = await firestore.collection('users').add(newUser);
 
-    const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: newUser.companyId };
+    const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: companyRef.id };
 
     const { accessToken, refreshToken } = req.server.generateTokens(userToTokenize);
 
@@ -308,7 +335,7 @@ const googleAuth = async (req, reply) => {
 
 const microsoftAuth = async (req, reply) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, companyName } = req.body;
     if (!idToken) return reply.code(400).send({ error: 'ID token is required' });
 
     // Verify the ID token with Microsoft
@@ -329,6 +356,10 @@ const microsoftAuth = async (req, reply) => {
       .get();
     if (userDoc.empty) {
       // New user, create account
+      if (!companyName) {
+        return reply.code(400).send({ error: 'companyName is required for new users' });
+      }
+
       const roleDoc = await firestore.collection('roles')
         .where('name', '==', 'Client')
         .limit(1)
@@ -336,11 +367,23 @@ const microsoftAuth = async (req, reply) => {
       if (roleDoc.empty) {
         return reply.code(500).send({ error: 'Default role not found' });
       }
+
+      const companyRef = await firestore.collection('companies').add({
+        CompanyName: companyName,
+        createdAt: new Date().toISOString()
+      });
+
+      await firestore.collection('companies').doc(companyRef.id).update({
+        CompanyID: companyRef.id
+      });
+
       const roleData = roleDoc.docs[0].data();
       const newUser = {
         email,
         fullName: name,
         microsoftId,
+        companyName,
+        companyId: companyRef.id,
         roleName: roleData.name,
         role: roleData,
         createdAt: new Date().toISOString(),
@@ -348,7 +391,7 @@ const microsoftAuth = async (req, reply) => {
 
       const newUserDoc = await firestore.collection('users').add(newUser);
 
-      const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: newUser.companyId };
+      const userToTokenize = { id: newUserDoc.id, email, fullName: name, companyId: companyRef.id };
 
       const { accessToken, refreshToken } = req.server.generateTokens({ ...userToTokenize });
 
