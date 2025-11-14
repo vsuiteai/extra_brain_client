@@ -1649,6 +1649,19 @@ paths:
     get:
       summary: Start Google OAuth 2.0 flow
       description: Redirects the user to Google to begin OAuth; no request body.
+      parameters:
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Optional state to pass through OAuth flow
+        - name: companyName
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Company name for new user registration
       responses:
         '302':
           description: Redirect to Google OAuth consent screen
@@ -1658,12 +1671,27 @@ paths:
   /api/auth/google:
     get:
       summary: Google OAuth callback
-      description: Handles Google OAuth callback, sets HttpOnly cookies, and redirects to the frontend.
+      description: Handles Google OAuth callback, sets HttpOnly cookies, and redirects to the frontend. For new users, companyName must be provided in state parameter.
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+          description: OAuth authorization code from Google
+        - name: state
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Encoded JSON containing state and companyName
       responses:
         '302':
-          description: Redirect back to frontend after successful login
+          description: Redirect back to frontend after successful login or to signup if companyName missing
         '400':
           description: Invalid callback
+        '500':
+          description: Failed to complete Google OAuth
   /api/auth/me:
     get:
       summary: Get current authenticated user profile
@@ -1689,20 +1717,48 @@ paths:
   /api/auth/microsoft:
     post:
       summary: Microsoft OAuth login
+      description: Authenticates with Microsoft ID token. For new users, companyName is required.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
+              required:
+                - idToken
               properties:
                 idToken:
                   type: string
+                  description: Microsoft ID token
+                companyName:
+                  type: string
+                  description: Company name (required for new users)
       responses:
         '200':
           description: Microsoft login success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+                  fullName:
+                    type: string
+                  companyId:
+                    type: string
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
         '400':
-          description: Invalid token
+          description: Invalid token or missing companyName for new users
+        '401':
+          description: Invalid or expired token
+        '500':
+          description: Server error
 
   /api/auth/forgot-password:
     post:
