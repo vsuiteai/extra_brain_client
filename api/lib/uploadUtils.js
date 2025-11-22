@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { runGemini } from '../../services/aiProviders.js';
 
 // Parse file headers and sample rows
 export async function parseFileHeaders(buffer, filename) {
@@ -58,7 +59,7 @@ export async function parseFileWithMapping(buffer, filename, options) {
 }
 
 // Suggest mapping based on header names
-export function suggestMapping(headers) {
+export async function suggestMapping(headers) {
   const synonyms = {
     month: ['month', 'period', 'date', 'periodending', 'periodend', 'monthending'],
     revenue: ['revenue', 'income', 'sales', 'totalsales', 'totalincome', 'totalrevenue'],
@@ -72,13 +73,72 @@ export function suggestMapping(headers) {
   };
 
   const mapping = {};
+  const unmatchedFields = [];
 
   for (const [field, syns] of Object.entries(synonyms)) {
     const idx = bestMatch(syns, headers);
-    if (idx !== null) mapping[field] = idx;
+    if (idx !== null) {
+      mapping[field] = idx;
+    } else {
+      unmatchedFields.push(field);
+    }
+  }
+
+  // Use AI fallback if critical fields are missing
+  if (!mapping.month || !mapping.revenue || unmatchedFields.length > 3) {
+    try {
+      const aiMapping = await suggestMappingWithAI(headers);
+      // Merge AI suggestions for missing fields only
+      for (const field of unmatchedFields) {
+        if (aiMapping[field] !== undefined) {
+          mapping[field] = aiMapping[field];
+        }
+      }
+      // Override if AI found critical fields we missed
+      if (!mapping.month && aiMapping.month !== undefined) mapping.month = aiMapping.month;
+      if (!mapping.revenue && aiMapping.revenue !== undefined) mapping.revenue = aiMapping.revenue;
+    } catch (err) {
+      console.error('AI mapping fallback failed:', err);
+    }
   }
 
   return mapping;
+}
+
+// AI-powered mapping suggestion
+async function suggestMappingWithAI(headers) {
+  const prompt = `Given these column headers from a financial spreadsheet, map them to our schema fields.
+
+Headers (with index):
+${headers.map((h, i) => `${i}: "${h}"`).join('\n')}
+
+Schema fields needed:
+- month: period/date column (REQUIRED)
+- revenue: total revenue/income/sales (REQUIRED)
+- cogs: cost of goods sold (optional)
+- opex: operating expenses (optional)
+- ebitda: earnings before interest, taxes, depreciation, amortization (optional)
+- cash: cash balance (optional)
+- ar: accounts receivable (optional)
+- ap: accounts payable (optional)
+- inventory: inventory balance (optional)
+
+Respond ONLY with a JSON object mapping field names to column indices. Use null for fields that don't exist.
+Example: {"month":0,"revenue":1,"cogs":2,"opex":null}
+
+JSON:`;
+
+  const response = await runGemini({
+    model: 'gemini-2.0-flash-exp',
+    prompt,
+    context: ''
+  });
+
+  // Extract JSON from response
+  const jsonMatch = response.match(/\{[^}]+\}/);
+  if (!jsonMatch) throw new Error('Invalid AI response');
+  
+  return JSON.parse(jsonMatch[0]);
 }
 
 function bestMatch(synonyms, headers) {
@@ -120,7 +180,7 @@ export function toOptionalNumber(v) {
   return toNumber(v);
 }
 
-export function normalizeMonth(raw, format = 'auto') {
+export function normalizeMonth(raw) {
   if (!raw) return null;
 
   // Try parsing as Excel date serial

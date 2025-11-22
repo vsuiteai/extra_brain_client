@@ -224,12 +224,19 @@ GCS_BUCKET=vsuite-objects
 
 ## Mapping Heuristics
 
-The system automatically detects columns using synonym matching:
-- **month**: "month", "period", "date", "periodending"
-- **revenue**: "revenue", "income", "sales", "totalsales"
-- **cogs**: "cogs", "costofgoods", "costofgoodssold"
-- **opex**: "opex", "operatingexpenses", "expenses"
-- And more...
+The system uses a two-tier approach:
+
+1. **Rule-based matching** (primary): Synonym matching for common column names
+   - **month**: "month", "period", "date", "periodending"
+   - **revenue**: "revenue", "income", "sales", "totalsales"
+   - **cogs**: "cogs", "costofgoods", "costofgoodssold"
+   - **opex**: "opex", "operatingexpenses", "expenses"
+   - And more...
+
+2. **AI-powered fallback** (when needed): Uses Gemini to suggest mappings when:
+   - Critical fields (month, revenue) are not found
+   - More than 3 fields remain unmatched
+   - Handles unusual or custom column names
 
 ## Data Normalization
 
