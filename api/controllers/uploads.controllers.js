@@ -49,7 +49,7 @@ export async function analyzeUpload(request, reply) {
   if (!mappingSnap.empty) {
     suggestedMappingResult = mappingSnap.docs[0].data().mapping;
   } else {
-    suggestedMappingResult = suggestMapping(columns.map(c => c.name));
+    suggestedMappingResult = await suggestMapping(columns.map(c => c.name));
   }
 
   reply.send({
