@@ -166,8 +166,8 @@ const refreshTokens = (app) => async (req, reply) => {
 }
 
 const googleLogin = async (req, reply) => {
-  const { state = '', companyName = '' } = req.query;
-  const stateData = JSON.stringify({ state, companyName });
+  const { state = '' } = req.query;
+  const stateData = JSON.stringify({ state });
   const redirectUrl = `${process.env.BASE_URL}/api/auth/google`;
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/auth/oauthchooseaccount?approval_prompt=force&scope=email%20profile%20openid&client_id=${clientId}&redirect_uri=${redirectUrl}&response_type=code&access_type=offline&flowName=GeneralOAuthFlow&state=${encodeURIComponent(stateData)}`;
@@ -180,11 +180,9 @@ const googleAuth = async (req, reply) => {
   if (!code) return reply.code(400).send({ error: 'code is required' });
 
   let state = '';
-  let companyName = '';
   try {
     const parsed = JSON.parse(decodeURIComponent(stateParam || '{}'));
     state = parsed.state || '';
-    companyName = parsed.companyName || '';
   } catch {
     state = stateParam || '';
   }
@@ -242,11 +240,7 @@ const googleAuth = async (req, reply) => {
     .get();
   
   if (userDoc.empty) {
-    // New user, create account
-    if (!companyName) {
-      return reply.redirect(`${process.env.FRONTEND_URL}/signup?error=company_name_required&email=${encodeURIComponent(email)}`, 302);
-    }
-
+    // New user, create account with auto-generated company
     const roleDoc = await firestore.collection('roles')
       .where('name', '==', 'Client')
       .limit(1)
@@ -255,8 +249,9 @@ const googleAuth = async (req, reply) => {
       return reply.code(500).send({ error: 'Default role not found' });
     }
 
+    const autoCompanyName = name ? `${name}'s Company` : `${email.split('@')[0]}'s Company`;
     const companyRef = await firestore.collection('companies').add({
-      CompanyName: companyName,
+      CompanyName: autoCompanyName,
       createdAt: new Date().toISOString()
     });
 
@@ -269,7 +264,7 @@ const googleAuth = async (req, reply) => {
       email,
       fullName: name,
       avatar: picture,
-      companyName,
+      companyName: autoCompanyName,
       companyId: companyRef.id,
       roleName: roleData.name,
       role: roleData,
@@ -335,7 +330,7 @@ const googleAuth = async (req, reply) => {
 
 const microsoftAuth = async (req, reply) => {
   try {
-    const { idToken, companyName } = req.body;
+    const { idToken } = req.body;
     if (!idToken) return reply.code(400).send({ error: 'ID token is required' });
 
     // Verify the ID token with Microsoft
@@ -355,11 +350,7 @@ const microsoftAuth = async (req, reply) => {
       .limit(1)
       .get();
     if (userDoc.empty) {
-      // New user, create account
-      if (!companyName) {
-        return reply.code(400).send({ error: 'companyName is required for new users' });
-      }
-
+      // New user, create account with auto-generated company
       const roleDoc = await firestore.collection('roles')
         .where('name', '==', 'Client')
         .limit(1)
@@ -368,8 +359,9 @@ const microsoftAuth = async (req, reply) => {
         return reply.code(500).send({ error: 'Default role not found' });
       }
 
+      const autoCompanyName = name ? `${name}'s Company` : `${email.split('@')[0]}'s Company`;
       const companyRef = await firestore.collection('companies').add({
-        CompanyName: companyName,
+        CompanyName: autoCompanyName,
         createdAt: new Date().toISOString()
       });
 
@@ -382,7 +374,7 @@ const microsoftAuth = async (req, reply) => {
         email,
         fullName: name,
         microsoftId,
-        companyName,
+        companyName: autoCompanyName,
         companyId: companyRef.id,
         roleName: roleData.name,
         role: roleData,
