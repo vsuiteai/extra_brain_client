@@ -25,6 +25,7 @@
     "axios": "^1.12.2",
     "bcryptjs": "^3.0.2",
     "dotenv": "^16.4.1",
+    "exceljs": "^4.4.0",
     "fastify": "^5.5.0",
     "fastify-plugin": "^5.0.1",
     "google-auth-library": "^10.3.0",
@@ -34,15 +35,15 @@
     "openai": "^5.22.0",
     "pdfkit": "^0.17.2",
     "qrcode": "^1.5.4",
-    "salesforce-oauth2": "^0.2.0",
     "speakeasy": "^2.0.0",
     "xero-node": "^13.1.0",
-    "xlsx": "^0.18.5",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.34.0",
-    "eslint": "^9.34.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-no-secrets": "^2.2.1",
+    "eslint-plugin-security": "^3.0.1",
     "globals": "^16.3.0",
     "nodemon": "^3.1.10"
   }

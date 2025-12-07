@@ -1,22 +1,26 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { runGemini } from '../../services/aiProviders.js';
 
 // Parse file headers and sample rows
 export async function parseFileHeaders(buffer, filename) {
   const ext = filename.split('.').pop().toLowerCase();
-  let workbook;
+  const workbook = new ExcelJS.Workbook();
 
   if (ext === 'csv') {
-    workbook = XLSX.read(buffer, { type: 'buffer', raw: true });
+    await workbook.csv.read(buffer);
   } else if (ext === 'xlsx' || ext === 'xls') {
-    workbook = XLSX.read(buffer, { type: 'buffer' });
+    await workbook.xlsx.load(buffer);
   } else {
     throw new Error('Unsupported file format');
   }
 
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) throw new Error('No worksheet found in file');
+
+  const rows = [];
+  worksheet.eachRow((row) => {
+    rows.push(row.values.slice(1)); // ExcelJS row.values is 1-indexed
+  });
 
   if (rows.length < 2) throw new Error('File must have at least header and one data row');
 
@@ -42,17 +46,21 @@ export async function parseFileHeaders(buffer, filename) {
 // Parse full file with mapping
 export async function parseFileWithMapping(buffer, filename, options) {
   const ext = filename.split('.').pop().toLowerCase();
-  let workbook;
+  const workbook = new ExcelJS.Workbook();
 
   if (ext === 'csv') {
-    workbook = XLSX.read(buffer, { type: 'buffer', raw: true });
+    await workbook.csv.read(buffer);
   } else {
-    workbook = XLSX.read(buffer, { type: 'buffer' });
+    await workbook.xlsx.load(buffer);
   }
 
-  const sheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[sheetName];
-  const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+  const worksheet = workbook.worksheets[0];
+  if (!worksheet) throw new Error('No worksheet found in file');
+
+  const rows = [];
+  worksheet.eachRow((row) => {
+    rows.push(row.values.slice(1)); // ExcelJS row.values is 1-indexed
+  });
 
   const dataStartRow = options.dataStartRow || 2;
   return rows.slice(dataStartRow - 1);
@@ -183,10 +191,11 @@ export function toOptionalNumber(v) {
 export function normalizeMonth(raw) {
   if (!raw) return null;
 
-  // Try parsing as Excel date serial
+  // Try parsing as Excel date serial (days since 1900-01-01)
   if (typeof raw === 'number') {
-    const date = XLSX.SSF.parse_date_code(raw);
-    return `${date.y}-${String(date.m).padStart(2, '0')}`;
+    const excelEpoch = new Date(1900, 0, 1);
+    const date = new Date(excelEpoch.getTime() + (raw - 2) * 86400000); // -2 for Excel's leap year bug
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   }
 
   // Try parsing as string
